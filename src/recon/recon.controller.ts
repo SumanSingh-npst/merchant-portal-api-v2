@@ -5,19 +5,14 @@ import { Multer } from 'multer';
 @Controller('recon')
 export class ReconController {
   constructor(private readonly reconService: ReconService) {
-
-
   }
 
-
-  @Post()
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Multer.File) {
-    return this.reconService.validateAndStoreFile(file);
+  @Post('/initiate2WayRecon')
+  @UseInterceptors(FileInterceptor('switchFile'))
+  @UseInterceptors(FileInterceptor('npciFile'))
+  async initiate2WayRecon(@UploadedFile() switchFiles: Multer.File[], @UploadedFile() npciFiles: Multer.File[]) {
+    return this.reconService.initiate2WayRecon(switchFiles, npciFiles);
   }
-  // async initiateRecon() {
-  //   return await this.reconService.initiate2WayRecon();
-  // }
 
 
 

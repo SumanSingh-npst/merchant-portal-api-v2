@@ -4,14 +4,7 @@ import { Multer } from 'multer'
 export class ReconService {
 
 
-    validateAndStoreFile(file: Multer.File) {
-        try {
-            // Logic to validate and store file
 
-        } catch (error) {
-            throw error
-        }
-    }
 
     async initiate2WayRecon(switchFiles, npciFiles) {
         // Logic to read the CSV file data and perform recon here
