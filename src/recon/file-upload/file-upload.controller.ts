@@ -16,7 +16,6 @@ export class FileUploadController {
     @UseInterceptors(FilesInterceptor('files', 3))
     async uploadSwitchFile(@UploadedFiles() files: Multer.File[]) {
         return await this.fileUploadService.validateAndStoreFiles(files, true);
-
     }
 
 }

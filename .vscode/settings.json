@@ -1,0 +1,27 @@
+{
+  "sqltools.connections": [
+    {
+      "server": "103.209.147.51",
+      "port": 8123,
+      "useHTTPS": false,
+      "database": "default",
+      "username": "clickhouse_admin",
+      "enableTls": false,
+      "previewLimit": 50,
+      "password": "j38h39skmTNnsjwT",
+      "driver": "ClickHouse",
+      "name": "clickhouse_uat"
+    },
+    {
+      "server": "185.218.125.219",
+      "port": 8123,
+      "useHTTPS": false,
+      "username": "clickhouse_admin",
+      "enableTls": false,
+      "previewLimit": 50,
+      "password": "Teng!n@404",
+      "driver": "ClickHouse",
+      "name": "clickhouse_chandan"
+    }
+  ]
+}
