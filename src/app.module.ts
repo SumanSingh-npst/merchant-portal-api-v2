@@ -9,12 +9,17 @@ import { ClickHouseModule } from '@md03/nestjs-clickhouse';
   imports: [ReconModule,
     ClickHouseModule.forRoot({
       clickhouse_settings: {
-        async_insert: 1,
-      },
-      host: 'http://103.209.147.51:8123',
-      username: 'clickhouse_admin',
-      password: 'j38h39skmTNnsjwT',
+        tcp_keep_alive_timeout: 60000,
+        http_connection_timeout: 60000,
+        wait_end_of_query: 1,
 
+      },
+      //host: 'http://103.209.147.51:8123',
+      //username: 'clickhouse_admin',
+      //password: 'j38h39skmTNnsjwT',
+      url: '  https://vzl9tbrfra.ap-south-1.aws.clickhouse.cloud:8443',
+      username: 'default',
+      password: 'CsRCIAHoU.3jJ'
     }),
     MulterModule.register({
       dest: './uploads',

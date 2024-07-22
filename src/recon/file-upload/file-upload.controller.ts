@@ -13,7 +13,7 @@ export class FileUploadController {
     }
 
     @Post('/switchUploads')
-    @UseInterceptors(FilesInterceptor('files', 3))
+    @UseInterceptors(FilesInterceptor('files', 3, { limits: { fileSize: 2 * 1024 * 1024 * 1024 } }))
     async uploadSwitchFile(@UploadedFiles() files: Multer.File[]) {
         return await this.fileUploadService.validateAndStoreFiles(files, true);
     }

@@ -3,6 +3,8 @@ import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as csv from 'csv-parser';
+import * as fastcsv from 'fast-csv';
+
 import { performance, PerformanceObserver } from 'perf_hooks';
 import type { ClickHouseClient, QueryParams } from '@clickhouse/client';
 import { InjectClickHouse } from '@md03/nestjs-clickhouse';
@@ -14,7 +16,8 @@ export class FileUploadService {
     private readonly uploadPath = path.join(__dirname, '..', 'uploads');
     private readonly duplicateTransactionsPath = path.join(__dirname, '..', 'duplicate-transactions');
     private readonly invalidValueTransactionsPath = path.join(__dirname, '..', 'missing-value-transactions');
-
+    private ramUsed: number;
+    private duplicateTransactions;
     constructor(
         @InjectClickHouse() private readonly clickdb: ClickHouseClient, private validator: FileValidationService
     ) { }
@@ -35,7 +38,9 @@ export class FileUploadService {
             await Promise.all(fileProcessingPromises);
             const type = isSwitchFile ? 'Switch' : 'NPCI';
             this.saveTransactions(type, duplicateTransactions, invalidValueTransactions, validTransactions, isSwitchFile);
-            isSwitchFile ? this.insertSwitchDataToDB(validTransactions) : this.insertNPCIDataToDB(validTransactions);
+
+            isSwitchFile ? await this.insertSwitchDataToDB(validTransactions) : await this.insertNPCIDataToDB(validTransactions);
+
             const endTime = performance.now();
             const totalTime = endTime - startTime;
 
@@ -47,12 +52,112 @@ export class FileUploadService {
                 duplicateCount: duplicateTransactions.length,
                 duplicateTransactions: duplicateTransactions,
                 totalSeconds: Math.floor(totalTime / 1000),
-                ramUsed: Math.floor(process.memoryUsage().heapUsed / 1024 / 1024) + " MB",
+                ramUsed: this.ramUsed + " MB",
             };
 
         } catch (error) {
+            console.error(error);
             throw new BadRequestException(`Error in file processing`, error);
         }
+    }
+
+
+    async validateAndStoreSwitchFile(files: Multer.File[]) {
+        try {
+
+            const startTime = performance.now();
+            if (!fs.existsSync(this.uploadPath)) {
+                fs.mkdirSync(this.uploadPath);
+            }
+
+            const transactionIds = new Set<string>();
+            const validTransactions: any[] = [];
+            const duplicateTransactions: any[] = [];
+            const missingValueTransactions: any[] = [];
+            console.log(`start processsing swithch file at ${startTime}`);
+
+            const processFile = (file: Multer.File) => {
+                return new Promise<void>((resolve, reject) => {
+                    console.log(`creating stream of rows....for file ${file.path}`)
+                    fs.createReadStream(file.path)
+                        .pipe(fastcsv.parse({ headers: true }))
+                        .on('data', (row) => {
+
+                            const { isValid, processedRow } = this.validateRow(row, transactionIds);
+
+                            if (isValid) {
+
+                                validTransactions.push(processedRow);
+
+                            } else {
+
+                                missingValueTransactions.push(processedRow);
+                            }
+
+                            if (validTransactions.length >= 1000) {
+                                this.insertBatch(validTransactions.splice(0, 1000));
+                            }
+                        })
+                        .on('end', async () => {
+                            console.log('stream processing finished...at ', Date.UTC);
+                            if (validTransactions.length > 0) {
+                                //start inserting into batch
+                                await this.insertSwitchDataToDB(validTransactions);
+                            }
+                            resolve();
+                        })
+                        .on('error', (error) => {
+                            reject(error);
+                        });
+                });
+            };
+
+            await Promise.all(files.map(file => processFile(file)));
+
+            const endTime = performance.now();
+            const totalTime = endTime - startTime;
+
+            return {
+                validCount: validTransactions.length,
+                invalidCount: missingValueTransactions.length,
+                duplicateCount: duplicateTransactions.length,
+                totalSeconds: Math.floor(totalTime / 1000),
+                ramUsed: Math.floor(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+            };
+
+        } catch (error) {
+
+            console.error(error);
+            throw new BadRequestException(`Error in file processing`, error);
+        }
+    }
+
+    private validateRow(row: any, transactionIds: Set<string>) {
+        let isValid = true;
+        const processedRow = { ...row };
+
+        // Perform your validations here
+        // Example: Validate UPI Txn Id using regex
+        const txnIdRegex = /^[a-zA-Z0-9]{8,}$/;
+        if (!txnIdRegex.test(row['UPI_TXN_ID'])) {
+            isValid = false;
+        }
+
+        // Deduplication
+        if (transactionIds.has(row['UPI_TXN_ID'])) {
+            this.duplicateTransactions.push(row);
+            isValid = false;
+        } else {
+            transactionIds.add(row['UPI_TXN_ID']);
+        }
+
+        return { isValid, processedRow };
+    }
+
+    private async insertBatch(batch: any[]) {
+        // Insert the batch into ClickHouse;
+        const query = `INSERT INTO my_table VALUES `
+        // await this.clickdb.insert('INSERT INTO my_table VALUES');
     }
 
     private processFile(file: Multer.File, isSwitchFile: boolean, transactionIds: Set<string>, duplicateTransactions: any[], invalidValueTransactions: any[], validTransactions: any[]): Promise<void> {
@@ -88,8 +193,6 @@ export class FileUploadService {
         });
     }
 
-
-
     private async saveTransactions(type: string, duplicateTransactions: any[], invalidValueTransactions: any[], validTransactions: any[], isSwitchFile: boolean) {
         const invalidValueTransactionsPath = path.join(this.invalidValueTransactionsPath, type);
         const duplicateTransactionsPath = path.join(this.duplicateTransactionsPath, type);
@@ -107,30 +210,50 @@ export class FileUploadService {
     }
 
     private async insertSwitchDataToDB(txns: any[]) {
-        const query = `
-      INSERT INTO SWITCH_TXN (TXN_DATE, AMOUNT, UPICODE, STATUS, RRN, EXT_TXN_ID, PAYER_VPA, NOTE, PAYEE_VPA, UPI_TXN_ID, MCC) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
+        const batchSize = 16384;
+        console.log(`started inserting ${txns.length} records in batch of 16K rows per batch`);
+
+        for (let i = 0; i < txns.length; i += batchSize) {
+            const batch = txns.slice(i, i + batchSize);
+            console.log(`inside batch ${i} to ${i + batchSize}`);
+            const query = `
+      INSERT INTO SWITCH_TXN (TXN_DATE,TXN_TIME, AMOUNT, UPICODE, STATUS, RRN, EXT_TXN_ID, PAYER_VPA, NOTE, PAYEE_VPA, UPI_TXN_ID, MCC) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
     `;
-        const values = txns.map(item => (
-            `('${item.TXN_DATE}', '${item.AMOUNT}', '${item.UPICODE}', '${item.STATUS}', '${item.RRN}', '${item.EXT_TXN_ID || null}', '${item.PAYER_VPA}', '${item.NOTE}', '${item.PAYEE_VPA}', '${item.UPI_TXN_ID}', '${item.MCC}')`
-        )).join(', ');
-        try {
-            await this.clickdb.command({ query: `${query} ${values}` });
-        } catch (error) {
-            console.error(`Error inserting data: ${error.message}`);
+
+            const values = batch.map(item => (
+                `('${item.TXN_DATE}', '${item.TXN_TIME}', '${item.AMOUNT}', '${item.UPICODE}', '${item.STATUS}', '${item.RRN}', '${item.EXT_TXN_ID || null}', '${item.PAYER_VPA}', '${item.NOTE}', '${item.PAYEE_VPA}', '${item.UPI_TXN_ID}', '${item.MCC}')`
+            )).join(', ');
+            this.ramUsed = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+
+            try {
+                this.ramUsed = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+                console.log(`Inserting batch of ${batch.length} transactions...`);
+                await this.clickdb.exec({ query: `${query} ${values}` });
+                this.ramUsed = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+                console.log(`total of ${txns.length} switch txns inserted successfully`);
+            } catch (error) {
+                console.log(error);
+                console.error(`Error inserting data: ${error.message}`);
+            }
         }
+
     }
 
     private async insertNPCIDataToDB(txns: any[]) {
-        const query = `INSERT INTO NPCI_TXN (TX_TYPE, UPI_TXN_ID, UPICODE, AMOUNT, TXN_DATE, TXN_TIME, RRN, PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER, BEN_IFSC_CODE, BEN_ACC_NUMBER) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES`;
+        const query = `INSERT INTO NPCI_TXN (TX_TYPE, UPI_TXN_ID, UPICODE, AMOUNT, TXN_DATE, TXN_TIME, RRN, PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER, BEN_IFSC_CODE, BEN_ACC_NUMBER)  VALUES`;
         const values = txns.map(item => (
-            `('${item.TX_TYPE}', '${item.UPI_TXN_ID}', '${item.UPICODE}', ${item.AMOUNT}, '${this.validator.convertDate(item.TXN_DATE)}','${item.TXN_TIME}', '${item.RRN}', '${item.PAYER_CODE}', '${item.PAYER_VPA}', '${item.PAYEE_CODE}', '${item.PAYEE_VPA}', '${item.MCC}', '${item.REM_IFSC_CODE}', '${item.REM_ACC_NUMBER}','${item.BEN_IFSC_CODE}', '${item.BEN_ACC_NUMBER}')`
+            `('${item.TX_TYPE}', '${item.UPI_TXN_ID}', '${item.UPICODE}', ${item.AMOUNT}, '${this.validator.convertNPCIDate(item.TXN_DATE)}','${item.TXN_TIME}', '${item.RRN}', '${item.PAYER_CODE}', '${item.PAYER_VPA}', '${item.PAYEE_CODE}', '${item.PAYEE_VPA}', '${item.MCC}', '${item.REM_IFSC_CODE}', '${item.REM_ACC_NUMBER}','${item.BEN_IFSC_CODE}', '${item.BEN_ACC_NUMBER}')`
         )).join(', ');
 
         //const settings = `SETTINGS async_insert=1, wait_for_async_insert=1`;
-        // console.log(`${query} ${values} ${settings}`);
+
         try {
-            const res = await this.clickdb.exec({ query: `${query} ${values}` });
-            console.log('Data inserted successfully', res);
+            this.ramUsed = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+            await this.clickdb.exec({ query: `${query} ${values}` });
+            this.ramUsed = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+
+            console.log(`total of ${txns.length} npci txns inserted successfully`);
+
         } catch (error) {
             console.error(`Error inserting data: ${error.message}`);
         }
