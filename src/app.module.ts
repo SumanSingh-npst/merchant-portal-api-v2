@@ -12,6 +12,7 @@ import { ClickHouseModule } from '@md03/nestjs-clickhouse';
         tcp_keep_alive_timeout: 60000,
         http_connection_timeout: 60000,
         wait_end_of_query: 1,
+        http_headers_progress_interval_ms: '1000',
 
       },
       //host: 'http://103.209.147.51:8123',
@@ -24,6 +25,7 @@ import { ClickHouseModule } from '@md03/nestjs-clickhouse';
     MulterModule.register({
       dest: './uploads',
     })],
+  
   controllers: [AppController],
   providers: [AppService],
 })

@@ -55,19 +55,35 @@ export class FileValidationService {
     }
 
 
+
     hasMissingFields(row: any, isSwitchFile: boolean): boolean {
+        //todo: check for missing fields using NA or undefined values
         return !row.UPI_TXN_ID || row.UPI_TXN_ID === '' ||
-            !row.RRN || row.RRN === '' ||
-            !row.UPICODE || row.UPICODE === '' ||
             !row.TXN_DATE || row.TXN_DATE === '' ||
-            !row.AMOUNT || row.AMOUNT === '' ||
-            !row.PAYER_VPA || row.PAYER_VPA === '' ||
             !row.PAYEE_VPA || row.PAYEE_VPA === '';
     }
 
+    validateRow(row: any) {
+        let isValid = true;
+        const payeeVPARegex = /^[^\.]*$/;
+        //todo add @ as part of validation in regex;
+        const payeeIsNotTimecosmos = /^(?!.*@timecosmos).*$/;
+        const amount = /^[0-9]+(\.[0-9]{1,2})?$/;
+        const dateRegex = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}|\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}|\d{2}\d{2}\d{2})$/;
+
+        if (!payeeVPARegex.test(row.PAYEE_VPA)) {
+            isValid = false;
+        } else if (!payeeIsNotTimecosmos.test(row.PAYEE_VPA)) {
+            isValid = false;
+        } else if (!amount.test(row.AMOUNT)) {
+            isValid = false;
+        } else if (!dateRegex.test(row.TXN_DATE)) {
+            isValid = false;
+        }
+        return isValid;
+    }
 
     convertNPCIDate(dateStr) {
-
         const month = dateStr.slice(0, 2);
         const day = dateStr.slice(2, 4);
         const year = '20' + dateStr.slice(4, 6);
