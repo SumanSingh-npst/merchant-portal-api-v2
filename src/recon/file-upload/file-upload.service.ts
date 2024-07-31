@@ -88,7 +88,6 @@ export class FileUploadService {
                         .on('data', (data) => {
 
                             const mappedData = this.validator.mapData(data, isSwitchFile);
-                            this.fileUploads.push({ fileName: file.originalname, fileSize: file.size, fileType: isSwitchFile ? 'SWITCH' : 'NPCI', count: mappedData.length, uploadBy: 'admin' });
                             if (this.validator.hasMissingFields(mappedData, isSwitchFile)) {
                                 this.missingTXNS.push(mappedData);
                             } else if (transactionIds.has(mappedData['UPI_TXN_ID'])) {
@@ -101,8 +100,21 @@ export class FileUploadService {
                             }
                         })
                         .on('end', () => {
-                            fs.unlinkSync(filePath);
-                            resolve();
+                            console.log('CSV file successfully processed');
+                            this.fileUploads.push({ fileName: file.originalname, fileSize: file.size, fileType: isSwitchFile ? 'SWITCH' : 'NPCI', count: this.validTXNS.length + this.invalidTXNS.length + this.duplicateTXNS.length + this.missingTXNS.length, uploadBy: 'admin' });
+                            fs.access(filePath, fs.constants.F_OK, (err) => {
+                                if (err) {
+                                    console.error(`File does not exist: ${filePath}`);
+                                    return resolve(); // Resolve even if file does not exist to avoid blocking the process
+                                }
+                                try {
+                                    fs.unlinkSync(filePath);
+                                    resolve();
+                                } catch (error) {
+                                    console.error(`Error deleting file: ${error}`);
+                                    reject(error);
+                                }
+                            });
                         })
                         .on('error', (error) => {
                             reject(error);
