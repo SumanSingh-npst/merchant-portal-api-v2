@@ -146,7 +146,6 @@ export class DBService {
 
     checkIfFileExists(fileName: string) {
         try {
-
             const query = `SELECT * FROM FILE_UPLOAD_HISTORY WHERE FILENAME = '${fileName}'`;
             return this.clickdb.exec({ query });
         } catch (error) {
