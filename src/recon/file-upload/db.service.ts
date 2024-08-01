@@ -7,6 +7,7 @@ import { IFileUpload } from "./file-upload.service";
 @Injectable()
 export class DBService {
 
+
     constructor(
         @InjectClickHouse() private readonly clickdb: ClickHouseClient, private validator: FileValidationService
     ) { }
@@ -119,38 +120,47 @@ export class DBService {
     async insertFileHistory(fileUploads: IFileUpload[]) {
         const maxRetries = 10;
         const currentDateTimeISO = new Date().toISOString(); // Get the current date and time in ISO format
+        const query = `INSERT INTO FILE_UPLOAD_HISTORY (FILENAME, SIZE, UPLOAD_DATE, UPLOAD_BY, FILE_TYPE, DATACOUNT) VALUES`;
+        console.log('file upload history insertion started');
 
-        for (let i = 0; i < fileUploads.length; i++) {
-            console.log('file upload history insertion started')
-            const query = `INSERT INTO FILE_UPLOAD_HISTORY (FILENAME, SIZE, UPLOAD_DATE, UPLOAD_BY, FILE_TYPE, DATACOUNT) VALUES`;
-            const values = fileUploads.map(file => (
-                `('${file.fileName}', '${file.fileSize}', '${currentDateTimeISO}', '${file.uploadBy}', '${file.fileType}', '${file.count}')`
-            )).join(', ');
+        //remove duplicates
+        const uniqueFileUploads = fileUploads.filter((file) => file.isDuplicate !== true);
+        if (uniqueFileUploads.length == 0) {
+            return;
+        }
+        const values = uniqueFileUploads.map(file => (
+            `('${file.fileName}', '${file.fileSize}', '${currentDateTimeISO}', '${file.uploadBy}', '${file.fileType}', '${file.count}')`
+        )).join(', ');
 
-            let attempt = 0;
-            while (attempt < maxRetries) {
-                try {
-                    await this.clickdb.exec({ query: `${query} ${values}` });
-                    console.log('file upload history completed successfully')
-                    break; // exit the retry loop on success
-                } catch (error) {
-                    attempt++;
-                    if (attempt >= maxRetries) {
-                        console.error(`Failed to insert file upload history after ${maxRetries} attempts. Exiting.`);
-                        throw error; // rethrow the error after exhausting all retries
-                    }
+        let attempt = 0;
+
+        while (attempt < maxRetries) {
+            try {
+                await this.clickdb.exec({ query: `${query} ${values}` });
+                console.log('file upload history completed successfully')
+                break; // exit the retry loop on success
+            } catch (error) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    console.error(`Failed to insert file upload history after ${maxRetries} attempts. Exiting.`);
+                    throw error; // rethrow the error after exhausting all retries
                 }
             }
         }
+
     }
 
     checkIfFileExists(fileName: string) {
         try {
             const query = `SELECT * FROM FILE_UPLOAD_HISTORY WHERE FILENAME = '${fileName}'`;
             return this.clickdb.exec({ query });
+
         } catch (error) {
             return error
         }
     }
+
+
+
 
 }

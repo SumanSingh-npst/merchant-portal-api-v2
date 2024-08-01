@@ -23,4 +23,18 @@ export class FileUploadController {
     async checkFileExists(@Param('fileName') fileName: string) {
         return await this.fileUploadService.checkFileExist(fileName);
     }
+
+    @Get('/history')
+    async getUploadedFileHistory() {
+        return await this.fileUploadService.getUploadedFileHistory();
+
+    }
+
+    @Post('/checkDuplicateUploads')
+    @UseInterceptors(FilesInterceptor('files', 50))
+    async uploadForDuplicate(@UploadedFiles() files: Multer.File[]) {
+        console.log('duplicate check starts....')
+        return await this.fileUploadService.checkDuplicateUploads(files, false);
+    }
+
 }
