@@ -14,12 +14,12 @@ export class DBService {
 
 
     async insertSwitchDataToDB(txns: any[]) {
-        const batchSize = 16384;
+        const batchSize = 30000;
         const retries = 10;
         console.log(`started inserting ${txns.length} records in batch of 16K rows per batch`);
 
         for (let i = 0; i < txns.length; i += batchSize) {
-            const batch = txns.splice(i, i + batchSize);
+            const batch = txns.slice(i, i + batchSize);
             console.log(`inside batch ${i} to ${i + batchSize}`);
             const query = `
       INSERT INTO SWITCH_TXN (TXN_DATE,TXN_TIME, AMOUNT, UPICODE, STATUS, RRN, EXT_TXN_ID, PAYER_VPA, NOTE, PAYEE_VPA, UPI_TXN_ID, MCC) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
@@ -27,36 +27,40 @@ export class DBService {
             const values = batch.map(item => (
                 `('${item.TXN_DATE}', '${item.TXN_TIME}', '${item.AMOUNT}', '${item.UPICODE}', '${item.STATUS}', '${item.RRN}', '${item.EXT_TXN_ID || null}', '${item.PAYER_VPA}', '${item.NOTE}', '${item.PAYEE_VPA}', '${item.UPI_TXN_ID}', '${item.MCC}')`
             )).join(', ');
-            try {
-                console.log(`Inserting batch of ${batch.length} transactions...`);
-                await this.clickdb.exec({ query: `${query} ${values}` });
-            } catch (error) {
-                console.log(error);
-                console.error(`Error inserting data: ${error.message}`);
+            let attempt = 0;
+
+            while (attempt < retries) {
+                try {
+                    console.log(`Inserting batch of ${batch.length} transactions...`);
+                    await this.clickdb.exec({ query: `${query} ${values}` });
+                    break; // exit the retry loop on success
+
+                } catch (error) {
+                    attempt++;
+                    console.log(error);
+                    console.error(`Error inserting data: ${error.message}`);
+                }
             }
         }
     }
 
     async insertNPCIDataToDB(txns: any[]) {
-        const batchSize = 10000;
+        const batchSize = 30000;
         const maxRetries = 10;
-        console.log(`started inserting ${txns.length} records in batch of ${batchSize} rows per batch`);
+
 
         const txnLength = txns.length;
         for (let i = 0; i < txnLength; i += batchSize) {
             const batch = txns.splice(i, i + batchSize);
-            console.log(`inside batch ${i} to ${i + batchSize}`);
             const query = `INSERT INTO NPCI_TXN (TX_TYPE, UPI_TXN_ID, UPICODE, AMOUNT, TXN_DATE, TXN_TIME, RRN, PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER, BEN_IFSC_CODE, BEN_ACC_NUMBER) VALUES`;
             const values = batch.map(item => (
-                `('${item.TX_TYPE}', '${item.UPI_TXN_ID}', '${item.UPICODE}', ${item.AMOUNT}, '${this.validator.convertNPCIDate(item.TXN_DATE)}', '${item.TXN_TIME}', '${item.RRN}', '${item.PAYER_CODE}', '${item.PAYER_VPA}', '${item.PAYEE_CODE}', '${item.PAYEE_VPA}', '${item.MCC}', '${item.REM_IFSC_CODE}', '${item.REM_ACC_NUMBER}', '${item.BEN_IFSC_CODE}', '${item.BEN_ACC_NUMBER}')`
+                `('${item.TX_TYPE}', '${item.UPI_TXN_ID}', '${item.UPICODE}', ${item.AMOUNT}, '${item.TXN_DATE}', '${item.TXN_TIME}', '${item.RRN}', '${item.PAYER_CODE}', '${item.PAYER_VPA}', '${item.PAYEE_CODE}', '${item.PAYEE_VPA}', '${item.MCC}', '${item.REM_IFSC_CODE}', '${item.REM_ACC_NUMBER}', '${item.BEN_IFSC_CODE}', '${item.BEN_ACC_NUMBER}')`
             )).join(', ');
-
             let attempt = 0;
             while (attempt < maxRetries) {
                 try {
                     console.log(`Inserting batch of ${batch.length} npci transactions... (attempt ${attempt + 1})`);
                     await this.clickdb.exec({ query: `${query} ${values}` });
-                    console.log(`Batch from ${i} to ${i + batch.length} inserted successfully`);
                     break; // exit the retry loop on success
                 } catch (error) {
                     attempt++;
@@ -88,7 +92,6 @@ export class DBService {
         for (let i = 0; i < txns.length; i += batchSize) {
             const batch = txns.splice(i, i + batchSize);
             console.log(`Inside batch ${i} to ${i + batchSize}`);
-
             const query = `INSERT INTO ${tableName} 
             (UPI_TXN_ID, RRN, TXN_DATE, TXN_TIME, AMOUNT, PAYER_VPA, PAYEE_VPA, UPICODE, STATUS, IS_NPCI, IS_SWITCH, IS_CBS) 
             VALUES`;
@@ -159,8 +162,5 @@ export class DBService {
             return error
         }
     }
-
-
-
 
 }

@@ -26,11 +26,10 @@ export class FileUploadService {
 
     private readonly uploadPath = path.join(__dirname, '..', 'uploads');
 
-    private missingTXNS: any[] = [];
+    private transactionIds = new Set<string>();
     private duplicateTXNS: any[] = [];
     private invalidTXNS: any[] = [];
     private validTXNS: any[] = [];
-    private fileUploads: IFileUpload[] = [];
     constructor(
         private dbSvc: DBService,
         @InjectClickHouse() private readonly clickdb: ClickHouseClient, private validator: FileValidationService
@@ -46,14 +45,10 @@ export class FileUploadService {
         }
         const fileProcessingPromises = files.map((file, idx) => {
             return new Promise((resolve, reject) => {
-                console.log('filename=>', file.originalname);
-
                 if (uploadedFiles.some(uploadedFile => uploadedFile.fileName === file.originalname)) {
                     response.push({ fileName: file.originalname, isDuplicate: true, count: 0, uploadBy: '', fileSize: file.size, fileType: isSwitch ? 'SWITCH' : 'NPCI' });
-                    console.log(`duplicate file: ${file.originalname}`);
                     return resolve(response);
                 } else {
-                    console.log(`this should not work in case of same file name: ${file.originalname}`);
                     let recordCount = 0;
                     response.push({ fileName: file.originalname, count: 0, uploadBy: '', fileSize: file.size, fileType: isSwitch ? 'SWITCH' : 'NPCI', isDuplicate: false });
                     const filePath = path.join(this.uploadPath, file.originalname);
@@ -88,19 +83,24 @@ export class FileUploadService {
             //check for duplicate file entry in database
             const response = await this.checkDuplicateUploads(files, isSwitchFile);
             console.log(response);
+
             // Extract filenames of non-duplicate files
             const nonDuplicateFiles = files.filter(file =>
                 !response.some(res => res.fileName === file.originalname && res.isDuplicate)
             );
 
+            console.log('non duplicate files=>', nonDuplicateFiles)
+
+            if (nonDuplicateFiles.length === 0) return { status: false, msg: 'file was already uploaded into portal earlier ' }
             //proceed to upload non-duplicate files
-            const transactionIds = new Set<string>();
-            const fileProcessingPromises = nonDuplicateFiles.map(file => this.processFile(file, isSwitchFile, transactionIds));
+            const fileProcessingPromises = nonDuplicateFiles.map(file => this.processFile(file, isSwitchFile, this.transactionIds));
             await Promise.all(fileProcessingPromises);
+            //all transaction checks like missing and invalid is completed. next step is to clean and remove any duplicates for the same date
+            const txns = this.validator.removeDuplicates(this.validTXNS, 'UPI_TXN_ID');
+            this.validTXNS = txns;
             isSwitchFile ? await this.dbSvc.insertSwitchDataToDB(this.validTXNS) : await this.dbSvc.insertNPCIDataToDB(this.validTXNS);
             await this.dbSvc.insertJunkDataToDB(this.invalidTXNS, isSwitchFile, 'INVALID_TXN');
             await this.dbSvc.insertJunkDataToDB(this.duplicateTXNS, isSwitchFile, 'DUPLICATE_TXN');
-            await this.dbSvc.insertJunkDataToDB(this.missingTXNS, isSwitchFile, 'MISSING_TXN');
             await this.dbSvc.insertFileHistory(response);
             console.log(`File processing took ${performance.now() - startTime} milliseconds`);
             return { status: true, duplicateFiles: response, msg: `File processing took ${(performance.now() - startTime) / 60000} minutes` };
@@ -113,7 +113,6 @@ export class FileUploadService {
             this.invalidTXNS = [];
             this.validTXNS = [];
             this.duplicateTXNS = [];
-            this.missingTXNS = [];
             console.log('File processing completed');
         }
     }
@@ -130,17 +129,12 @@ export class FileUploadService {
             fs.createReadStream(filePath)
                 .pipe(csv({ headers }))
                 .on('data', (data) => {
-
                     const mappedData = this.validator.mapData(data, isSwitchFile);
-                    if (this.validator.hasMissingFields(mappedData, isSwitchFile)) {
-                        this.missingTXNS.push(mappedData);
-                    } else if (transactionIds.has(mappedData['UPI_TXN_ID'])) {
-                        this.duplicateTXNS.push(mappedData);
-                    } else if (this.validator.validateRow(mappedData)) {
+                    if (this.validator.validateRow(mappedData)) {
                         this.invalidTXNS.push(mappedData);
                     } else {
                         this.validTXNS.push(mappedData);
-                        transactionIds.add(mappedData['UPI_TXN_ID']);
+                        this.transactionIds.add(mappedData['UPI_TXN_ID']);
                     }
                 })
                 .on('end', () => {
@@ -162,10 +156,8 @@ export class FileUploadService {
                 .on('error', (error) => {
                     reject(error);
                 });
-
         });
     }
-
     async checkFileExist(fileName: string) {
         try {
             const result = await this.dbSvc.checkIfFileExists(fileName);

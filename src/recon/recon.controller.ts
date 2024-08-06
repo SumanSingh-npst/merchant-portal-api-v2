@@ -58,5 +58,9 @@ export class ReconController {
     return await this.reconService.getFailureCount(date);
   }
 
+  @Get('/getMissingTXNS/:date')
+  async getMissingTXNS(@Param('date') date: any) {
+    return await this.reconService.getMissingTXNS(date);
+  }
 
 }
