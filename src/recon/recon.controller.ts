@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { ReconService } from './recon.service';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { Multer } from 'multer';
@@ -18,10 +18,6 @@ export class ReconController {
     return await this.reconService.getTotalTXNCountByDate(date);
   }
 
-  @Get('/getSwitchCountByDate/:date')
-  async getSwitchCountByDate(@Param('date') date: string) {
-    return await this.reconService.getSwitchCountByDate(date);
-  }
 
   @Get('/getNPCICountByDate/:date')
   async getNPCICountByDate(@Param('date') date: string) {
@@ -56,11 +52,6 @@ export class ReconController {
   @Get('/getFailureCount/:date')
   async getFailureCount(@Param('date') date: string) {
     return await this.reconService.getFailureCount(date);
-  }
-
-  @Get('/getMissingTXNS/:date')
-  async getMissingTXNS(@Param('date') date: any) {
-    return await this.reconService.getMissingTXNS(date);
   }
 
 }

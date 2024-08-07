@@ -47,8 +47,6 @@ export class DBService {
     async insertNPCIDataToDB(txns: any[]) {
         const batchSize = 30000;
         const maxRetries = 10;
-
-
         const txnLength = txns.length;
         for (let i = 0; i < txnLength; i += batchSize) {
             const batch = txns.splice(i, i + batchSize);
@@ -74,7 +72,6 @@ export class DBService {
         }
         console.log(`Total of ${txns.length} npci txns processed successfully`);
     }
-
 
     /**
  * Inserts junk data into a database table. This junk data are transactions which are missing values, contain invalid values, or are duplicated.

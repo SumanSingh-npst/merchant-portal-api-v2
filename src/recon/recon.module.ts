@@ -5,8 +5,10 @@ import { FileUploadController } from './file-upload/file-upload.controller';
 import { FileUploadService } from './file-upload/file-upload.service';
 import { FileValidationService } from './file-upload/file-validation.service';
 import { DBService } from './file-upload/db.service';
+import { ReportController } from './report/report.controller';
+import { ReportService } from './report/report.service';
 @Module({
-  controllers: [ReconController, FileUploadController],
-  providers: [ReconService, FileUploadService, FileValidationService, DBService],
+  controllers: [ReconController, FileUploadController, ReportController],
+  providers: [ReconService, FileUploadService, FileValidationService, DBService, ReportService],
 })
 export class ReconModule { }

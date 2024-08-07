@@ -170,6 +170,51 @@ export class FileUploadService {
 
     }
 
+
+    async getDuplicateRecordInOneFile(file: Multer.File, isSwitchFile: boolean) {
+        return new Promise<void>((resolve, reject) => {
+            const filePath = path.join(this.uploadPath, file.originalname);
+            fs.writeFileSync(filePath, file.buffer);
+            const headers = isSwitchFile ? [
+                'TXN_DATE', 'AMOUNT', 'UPICODE', 'STATUS', 'RRN', 'EXT_TXN_ID', 'PAYEE_VPA', 'NOTE', 'PAYER_VPA', '\\N', 'UPI_TXN_ID', 'MCC'
+            ] : [
+                'NA', 'TX_TYPE', 'UPI_TXN_ID', 'RRN', 'UPICODE', 'TXN_DATE', 'TXN_TIME', 'AMOUNT', 'UMN', 'MAPPER_ID', 'INIT_MODE', 'PURPOSE_CODE', 'PAYER_CODE', 'PAYER_MCC', 'PAYER_VPA', 'PAYEE_CODE', 'MCC', 'PAYEE_VPA', 'REM_CODE', 'REM_IFSC_CODE', 'REM_ACC_TYPE', 'REM_ACC_NUMBER', 'BEN_CODE', 'BEN_IFSC_CODE', 'BEN_ACC_TYPE', 'BEN_ACC_NUMBER'
+            ];
+            fs.createReadStream(filePath)
+                .pipe(csv({ headers }))
+                .on('data', (data) => {
+                    const mappedData = this.validator.mapData(data, isSwitchFile);
+                    if (this.validator.validateRow(mappedData)) {
+                        this.invalidTXNS.push(mappedData);
+                    } else if (this.transactionIds.has(mappedData['UPI_TXN_ID'])) {
+                        this.duplicateTXNS.push(mappedData);
+                    } else {
+                        this.validTXNS.push(mappedData);
+                        this.transactionIds.add(mappedData['UPI_TXN_ID']);
+                    }
+                })
+                .on('end', () => {
+                    console.log('CSV file successfully processed');
+                    fs.access(filePath, fs.constants.F_OK, (err) => {
+                        if (err) {
+                            console.error(`File does not exist: ${filePath}`);
+                            return resolve(); // Resolve even if file does not exist to avoid blocking the process
+                        }
+                        try {
+                            fs.unlinkSync(filePath);
+                            resolve();
+                        } catch (error) {
+                            console.error(`error deleting file: ${error}`);
+                            reject(error);
+                        }
+                    });
+                })
+                .on('error', (error) => {
+                    reject(error);
+                });
+        });
+    }
+
     async getUploadedFileHistory() {
         try {
             const query = `SELECT * FROM FILE_UPLOAD_HISTORY`;

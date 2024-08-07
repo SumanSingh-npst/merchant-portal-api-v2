@@ -12,8 +12,8 @@ export class ReconService {
     getReconTXNS(date: string) {
         throw new Error('Method not implemented.');
     }
-    getSuccessTXNS(date: string) {
-        throw new Error('Method not implemented.');
+    async getSuccessTXNS(date: string) {
+
     }
     getFailedTXNS(date: string) {
         throw new Error('Method not implemented.');
@@ -27,9 +27,8 @@ export class ReconService {
     getNPCICountByDate(date: string) {
         throw new Error('Method not implemented.');
     }
-    getSwitchCountByDate(date: string) {
-        throw new Error('Method not implemented.');
-    }
+
+
 
     constructor(
         @InjectClickHouse() private readonly clickdb: ClickHouseClient, private validator: FileValidationService
@@ -68,17 +67,6 @@ export class ReconService {
         }
     }
 
-    async getMissingTXNS(queryDate: Date) {
-        try {
-            const date = new Date(queryDate);
-            const query = await this.clickdb.query({ query: `SELECT * FROM MISSING_TXN WHERE TXN_DATE='${date}'` });
-            return await query.json();
-
-        } catch (error) {
-            console.error(error)
-            return error;
-        }
-    }
 
     async getTotalTXNCountByDate(date: string) {
         const query: QueryParams = {
@@ -102,7 +90,6 @@ export class ReconService {
         }
 
     }
-
 
     getReconReport() {
 
