@@ -24,6 +24,7 @@ export interface IFileUpload {
 export class FileUploadService {
 
 
+
     private readonly uploadPath = path.join(__dirname, '..', 'uploads');
 
     private transactionIds = new Set<string>();
@@ -130,12 +131,13 @@ export class FileUploadService {
                 .pipe(csv({ headers }))
                 .on('data', (data) => {
                     const mappedData = this.validator.mapData(data, isSwitchFile);
-                    if (this.validator.validateRow(mappedData)) {
+                    if (!this.validator.validateRow(mappedData)) {
                         this.invalidTXNS.push(mappedData);
                     } else {
                         this.validTXNS.push(mappedData);
                         this.transactionIds.add(mappedData['UPI_TXN_ID']);
                     }
+
                 })
                 .on('end', () => {
                     console.log('CSV file successfully processed');
@@ -236,6 +238,17 @@ export class FileUploadService {
         } catch (error) {
             return error
         }
+    }
+
+
+    async forceDeleteHistory(body: { fileName: string; uploadType: string; uploadDate: string; txnDate: string; }) {
+        try {
+            //            await this.dbSvc.deleteHistory(body.fileName, body.uploadType, body.uploadDate, body.txnDate);
+
+        } catch (error) {
+            throw error;
+        }
+
     }
 
 

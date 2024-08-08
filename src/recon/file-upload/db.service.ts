@@ -63,6 +63,7 @@ export class DBService {
                 } catch (error) {
                     attempt++;
                     console.error(`Error inserting batch from ${i} to ${i + batch.length} (attempt ${attempt}): ${error.message}`);
+                    console.log(values);
                     if (attempt >= maxRetries) {
                         console.error(`Failed to insert batch after ${maxRetries} attempts. Exiting.`);
                         throw error; // rethrow the error after exhausting all retries
@@ -155,6 +156,17 @@ export class DBService {
             const query = `SELECT * FROM FILE_UPLOAD_HISTORY WHERE FILENAME = '${fileName}'`;
             return this.clickdb.exec({ query });
 
+        } catch (error) {
+            return error
+        }
+    }
+
+    deleteHistory(fileName: string, tableName: string, fileType: string, uploadDate: string, txnDate: string) {
+        try {
+            const query = `DELETE FROM FILE_UPLOAD_HISTORY WHERE fileName = '${fileName}' AND FILE_TYPE = '${fileType}' AND UPLOAD_DATE = '${uploadDate}'`;
+            return this.clickdb.exec({ query }).then(() => {
+                return this.clickdb.exec({ query: `DELETE FROM ${tableName} WHERE TXN_DATE = '${txnDate}'` });
+            });
         } catch (error) {
             return error
         }

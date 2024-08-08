@@ -51,13 +51,19 @@ export class FileValidationService {
 
     validateRow(row: any) {
         let isValid = true;
-        const payeeIsNotTimecosmos = /^ [a - zA - Z0 - 9] + (?: \.[a-zA - Z0 - 9]+)* @timecosmos$/;
-
-        if (!payeeIsNotTimecosmos.test(row.PAYEE_VPA)) {
+        const payeeIsNotTimecosmos = /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@timecosmos$/;
+        const amount = /^\d+(?:\.\d{1,2})?$/;
+        // Removing the first row into invalid txn
+        if (row.UPICODE == '2.0') {
+            isValid = false;
+        } else if (!payeeIsNotTimecosmos.test(row.PAYEE_VPA)) {
+            isValid = false;
+        } else if (!amount.test(row.AMOUNT)) {
             isValid = false;
         }
         return isValid;
     }
+
 
     convertNPCIDate(dateStr) {
         //check using regex if it has 6 digits
