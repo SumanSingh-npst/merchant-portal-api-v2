@@ -38,9 +38,4 @@ export class FileUploadController {
         return await this.fileUploadService.checkDuplicateUploads(files, false);
     }
 
-    @Post('/checkDuplicateSwitchUploads')
-    async forceDeleteHistory(@Body() body: { fileName: string, uploadType: string, uploadDate: string, txnDate: string }) {
-        return await this.fileUploadService.forceDeleteHistory(body);
-    }
-
 }
