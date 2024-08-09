@@ -3,6 +3,7 @@ import { InjectClickHouse } from "@md03/nestjs-clickhouse";
 import { FileValidationService } from "./file-validation.service";
 import { Injectable } from "@nestjs/common";
 import { IFileUpload } from "./file-upload.service";
+import { table } from "console";
 
 @Injectable()
 export class DBService {
@@ -167,6 +168,19 @@ export class DBService {
         } catch (error) {
             return error
         }
+    }
+
+
+    async fetchExistingTxnIdsFromDB(tableName: string, upiTxnIds: string[]): Promise<string[]> {
+        const query = `
+        SELECT UPI_TXN_ID
+        FROM ${tableName}
+        WHERE UPI_TXN_ID IN (${upiTxnIds.map(id => `'${id}'`).join(',')})
+        AND TXN_DATE >= today() - 3
+    `;
+        const existingTxnIds = await this.clickdb.query({ query });
+        const results = await existingTxnIds.json();
+        return results.data.map((row: any) => row.UPI_TXN_ID);
     }
 
 }

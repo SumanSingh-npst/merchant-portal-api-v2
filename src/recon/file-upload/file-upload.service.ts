@@ -23,8 +23,6 @@ export interface IFileUpload {
 @Injectable()
 export class FileUploadService {
 
-
-
     private readonly uploadPath = path.join(__dirname, '..', 'uploads');
 
     private transactionIds = new Set<string>();
@@ -79,27 +77,31 @@ export class FileUploadService {
             if (!fs.existsSync(this.uploadPath)) {
                 fs.mkdirSync(this.uploadPath);
             }
-            //check for duplicate file entry in database
             const response = await this.checkDuplicateUploads(files, isSwitchFile);
-            // Extract filenames of non-duplicate files
             const nonDuplicateFiles = files.filter(file =>
                 !response.some(res => res.fileName === file.originalname && res.isDuplicate)
             );
-
-
             if (nonDuplicateFiles.length === 0) return { status: false, msg: 'file was already uploaded into portal earlier ' }
-            //proceed to upload non-duplicate files
             const fileProcessingPromises = nonDuplicateFiles.map(file => this.processFile(file, isSwitchFile, this.transactionIds));
             await Promise.all(fileProcessingPromises);
+            const existingIds = await this.dbSvc.fetchExistingTxnIdsFromDB(isSwitchFile ? 'SWITCH_TXN' : 'NPCI_TXN', this.validTXNS.map(txn => txn['UPI_TXN_ID']));
 
-            //all transaction checks like missing and invalid is completed. next step is to clean and remove any duplicates for the same date
+            // Identify duplicates in the current batch
+            const tmpDuplicates = this.validTXNS.filter(txn => existingIds.includes(txn['UPI_TXN_ID']));
+            console.log('total duplicate Ids', tmpDuplicates);
+
+            // Update the duplicateTXNS array with the original data plus the newly identified duplicates
+            this.duplicateTXNS = [...this.duplicateTXNS, ...tmpDuplicates];
+
+            // Now filter out validTXNS by removing those that are already existing in the database
+            this.validTXNS = this.validTXNS.filter(txn => !existingIds.includes(txn['UPI_TXN_ID']));
+
             isSwitchFile ? await this.dbSvc.insertSwitchDataToDB(this.validTXNS) : await this.dbSvc.insertNPCIDataToDB(this.validTXNS);
             await this.dbSvc.insertJunkDataToDB(this.invalidTXNS, isSwitchFile, 'INVALID_TXN');
             await this.dbSvc.insertJunkDataToDB(this.duplicateTXNS, isSwitchFile, 'DUPLICATE_TXN');
             await this.dbSvc.insertFileHistory(response);
             console.log(`File processing took ${performance.now() - startTime} milliseconds`);
             return { status: true, duplicateFiles: response, msg: `File processing took ${(performance.now() - startTime) / 60000} minutes` };
-
         } catch (error) {
             console.error(error);
             throw new BadRequestException(`Error in file processing`, error);
@@ -127,7 +129,10 @@ export class FileUploadService {
                     const mappedData = this.validator.mapData(data, isSwitchFile);
                     if (!this.validator.validateRow(mappedData)) {
                         this.invalidTXNS.push(mappedData);
-                    } else {
+                    } else if (transactionIds.has(mappedData['UPI_TXN_ID'])) {
+                        this.duplicateTXNS.push(mappedData);
+                    }
+                    else {
                         this.validTXNS.push(mappedData);
                         this.transactionIds.add(mappedData['UPI_TXN_ID']);
                     }

@@ -1,20 +1,22 @@
-import { Body, Controller, Get, Param, Post, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UploadedFiles, UseFilters, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer'
 import { FileUploadService } from './file-upload.service';
+import { FileUploadExceptionFilter } from './fileupload-exception.filter';
 @Controller('recon/file-upload')
 export class FileUploadController {
     constructor(private readonly fileUploadService: FileUploadService) { }
     @Post('/npciUploads')
-    @UseInterceptors(FilesInterceptor('files', 8))
+    @UseInterceptors(FilesInterceptor('files', 4))
+    @UseFilters(FileUploadExceptionFilter)
     async uploadNPCIFiles(@UploadedFiles() files: Multer.File[]) {
-        console.log('npci upload starts....')
+        console.log('npci upload starts.');
         return await this.fileUploadService.validateAndStoreFiles(files, false);
     }
     @Post('/switchUploads')
-    @UseInterceptors(FilesInterceptor('files', 21, { limits: { fileSize: 2 * 1024 * 1024 * 1024 } }))
+    @UseInterceptors(FilesInterceptor('files', 4, { limits: { fileSize: 2 * 1024 * 1024 * 1024 } }))
     async uploadSwitchFile(@UploadedFiles() files: Multer.File[]) {
-        console.log('switch upload starts....');
+        console.log('switch upload starts..');
         return await this.fileUploadService.validateAndStoreFiles(files, true);
     }
 
