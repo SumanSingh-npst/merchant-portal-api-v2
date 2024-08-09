@@ -46,32 +46,29 @@ export class DBService {
 
     async insertNPCIDataToDB(txns: any[]) {
         const batchSize = 30000;
-        const maxRetries = 10;
-        const txnLength = txns.length;
-        for (let i = 0; i < txnLength; i += batchSize) {
-            const batch = txns.splice(i, i + batchSize);
+        const retries = 10;
+        console.log(`started inserting npci data of length ${txns.length} records in batch of 16K rows per batch`);
+
+        for (let i = 0; i < txns.length; i += batchSize) {
+            const batch = txns.slice(i, i + batchSize);
+            console.log(`inside batch ${i} to ${i + batchSize}`);
             const query = `INSERT INTO NPCI_TXN (TX_TYPE, UPI_TXN_ID, UPICODE, AMOUNT, TXN_DATE, TXN_TIME, RRN, PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER, BEN_IFSC_CODE, BEN_ACC_NUMBER) VALUES`;
             const values = batch.map(item => (
                 `('${item.TX_TYPE}', '${item.UPI_TXN_ID}', '${item.UPICODE}', ${item.AMOUNT}, '${item.TXN_DATE}', '${item.TXN_TIME}', '${item.RRN}', '${item.PAYER_CODE}', '${item.PAYER_VPA}', '${item.PAYEE_CODE}', '${item.PAYEE_VPA}', '${item.MCC}', '${item.REM_IFSC_CODE}', '${item.REM_ACC_NUMBER}', '${item.BEN_IFSC_CODE}', '${item.BEN_ACC_NUMBER}')`
             )).join(', ');
             let attempt = 0;
-            while (attempt < maxRetries) {
+            while (attempt < retries) {
                 try {
-                    console.log(`Inserting batch of ${batch.length} npci transactions... (attempt ${attempt + 1})`);
+                    console.log(`Inserting batch of ${batch.length} transactions...`);
                     await this.clickdb.exec({ query: `${query} ${values}` });
                     break; // exit the retry loop on success
                 } catch (error) {
                     attempt++;
-                    console.error(`Error inserting batch from ${i} to ${i + batch.length} (attempt ${attempt}): ${error.message}`);
-                    console.log(values);
-                    if (attempt >= maxRetries) {
-                        console.error(`Failed to insert batch after ${maxRetries} attempts. Exiting.`);
-                        throw error; // rethrow the error after exhausting all retries
-                    }
+                    console.log(error);
+                    console.error(`Error inserting data: ${error.message}`);
                 }
             }
         }
-        console.log(`Total of ${txns.length} npci txns processed successfully`);
     }
 
     /**

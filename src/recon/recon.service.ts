@@ -42,15 +42,10 @@ export class ReconService {
         try {
             const command = await this.clickdb.query({
                 query: `INSERT INTO TWOWAY_RECON_TXN
-                        SELECT N.UPI_TXN_ID, N.TXN_DATE, N.AMOUNT, N.PAYER_VPA, N.PAYEE_VPA,
-                        S.STATUS, N.UPICODE, N.RRN, N.MCC, now() AS RECON_DATE, FALSE AS SETTLEMENT_STATUS,
-                        N.TXN_TIME, NULL AS SETTLEMENT_DATE
-                        FROM NPCI_TXN AS N
-                        INNER JOIN SWITCH_TXN AS S ON N.UPI_TXN_ID = S.UPI_TXN_ID
-                        WHERE DATEDIFF(day, N.TXN_DATE, S.TXN_DATE) BETWEEN -1 AND 1
-                        ORDER BY
-                        T.TXN_TIME ASC
-                ;`
+                        SELECT N.UPI_TXN_ID, N.TXN_DATE,N.AMOUNT, N.PAYER_VPA, N.PAYEE_VPA, S.STATUS,
+                        N.UPICODE, N.RRN, N.MCC, now() AS RECON_DATE,FALSE AS SETTLEMENT_STATUS,
+                        N.TXN_TIME, NULL AS SETTLEMENT_DATE FROM NPCI_TXN AS N INNER JOIN SWITCH_TXN AS S ON
+                        N.UPI_TXN_ID = S.UPI_TXN_ID AND N.TXN_DATE = S.TXN_DATE;`
             });
 
             //once all recon is completed delete the reconciled transaction from NPCI and SWITCH table;

@@ -79,26 +79,20 @@ export class FileUploadService {
             if (!fs.existsSync(this.uploadPath)) {
                 fs.mkdirSync(this.uploadPath);
             }
-            console.log('isSwitchFile: ', isSwitchFile);
-
             //check for duplicate file entry in database
             const response = await this.checkDuplicateUploads(files, isSwitchFile);
-            console.log(response);
-
             // Extract filenames of non-duplicate files
             const nonDuplicateFiles = files.filter(file =>
                 !response.some(res => res.fileName === file.originalname && res.isDuplicate)
             );
 
-            console.log('non duplicate files=>', nonDuplicateFiles)
 
             if (nonDuplicateFiles.length === 0) return { status: false, msg: 'file was already uploaded into portal earlier ' }
             //proceed to upload non-duplicate files
             const fileProcessingPromises = nonDuplicateFiles.map(file => this.processFile(file, isSwitchFile, this.transactionIds));
             await Promise.all(fileProcessingPromises);
+
             //all transaction checks like missing and invalid is completed. next step is to clean and remove any duplicates for the same date
-            const txns = this.validator.removeDuplicates(this.validTXNS, 'UPI_TXN_ID');
-            this.validTXNS = txns;
             isSwitchFile ? await this.dbSvc.insertSwitchDataToDB(this.validTXNS) : await this.dbSvc.insertNPCIDataToDB(this.validTXNS);
             await this.dbSvc.insertJunkDataToDB(this.invalidTXNS, isSwitchFile, 'INVALID_TXN');
             await this.dbSvc.insertJunkDataToDB(this.duplicateTXNS, isSwitchFile, 'DUPLICATE_TXN');
@@ -137,7 +131,6 @@ export class FileUploadService {
                         this.validTXNS.push(mappedData);
                         this.transactionIds.add(mappedData['UPI_TXN_ID']);
                     }
-
                 })
                 .on('end', () => {
                     console.log('CSV file successfully processed');

@@ -45,13 +45,9 @@ export class FileValidationService {
 
         return rows;
     }
-
-
-
-
     validateRow(row: any) {
         let isValid = true;
-        const payeeIsNotTimecosmos = /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@timecosmos$/;
+        const payeeIsNotTimecosmos = /^[a-zA-Z0-9]+\.[a-zA-Z0-9]+@timecosmos$/;
         const amount = /^\d+(?:\.\d{1,2})?$/;
         // Removing the first row into invalid txn
         if (row.UPICODE == '2.0') {
