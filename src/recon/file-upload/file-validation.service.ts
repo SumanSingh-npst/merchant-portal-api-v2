@@ -2,8 +2,9 @@ import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class FileValidationService {
-    mapData(data: any, isSwitchFile: boolean) {
+    mapData(data: any, isSwitchFile: boolean, uploadId: number) {
         let rows: any = {};
+        rows['UPLOAD_ID'] = uploadId;
         rows['UPI_TXN_ID'] = data['UPI_TXN_ID'];
         rows['UPICODE'] = data['UPICODE'];
         rows['AMOUNT'] = data['AMOUNT'];
@@ -11,7 +12,6 @@ export class FileValidationService {
         rows['PAYEE_VPA'] = data['PAYEE_VPA'];
         rows['PAYER_VPA'] = data['PAYER_VPA'];
         rows['MCC'] = data['MCC'];
-
         if (isSwitchFile) {
             let txnDateTime = data["TXN_DATE"].split(" "); // 2024-07-16 or 16-07-2024
             rows["TXN_DATE"] = this.convertSwitchDateFormat(txnDateTime[0]);

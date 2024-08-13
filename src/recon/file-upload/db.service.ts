@@ -14,6 +14,52 @@ export class DBService {
     ) { }
 
 
+    async truncateAll() {
+        const query = `TRUNCATE TABLE SWITCH_TXN;
+        TRUNCATE TABLE NPCI_TXN;
+        TRUNCATE TABLE INVALID_TXN;
+        TRUNCATE TABLE DUPLICATE_TXN;
+        TRUNCATE TABLE TWOWAY_RECON_TXN;
+        TRUNCATE TABLE NON_RECON_TXN;
+        TRUNCATE TABLE FILE_UPLOAD_HISTORY;
+        `
+        try {
+            this.clickdb.command({ query: 'TRUNCATE TABLE SWITCH_TXN' });
+            this.clickdb.command({ query: 'TRUNCATE TABLE NPCI_TXN' });
+            this.clickdb.command({ query: 'TRUNCATE TABLE INVALID_TXN' });
+            this.clickdb.command({ query: 'TRUNCATE TABLE DUPLICATE_TXN' });
+            this.clickdb.command({ query: 'TRUNCATE TABLE TWOWAY_RECON_TXN' });
+            this.clickdb.command({ query: 'TRUNCATE TABLE NON_RECON_TXN' });
+            this.clickdb.command({ query: 'TRUNCATE TABLE FILE_UPLOAD_HISTORY' });
+            return true;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getAllCount() {
+
+        const queries = [{ query: 'SELECT * FROM SWITCH_TXN', result: 0 },
+        { query: 'SELECT * FROM NPCI_TXN', result: 0 },
+        { query: 'SELECT * FROM INVALID_TXN', result: 0 },
+        { query: 'SELECT * FROM DUPLICATE_TXN', result: 0 },
+        { query: 'SELECT * FROM TWOWAY_RECON_TXN', result: 0 },
+        { query: 'SELECT * FROM NON_RECON_TXN', result: 0 },
+        { query: 'SELECT * FROM FILE_UPLOAD_HISTORY', result: 0 }];
+
+        try {
+            queries.map(async (q, idx) => {
+                const r = await this.clickdb.query({ query: q.query });
+                q.result = (await r.json()).data.length;
+                console.log(q.query + ' :' + q.result);
+            });
+            return queries;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+
     async insertSwitchDataToDB(txns: any[]) {
         const batchSize = 30000;
         const retries = 10;
@@ -45,6 +91,15 @@ export class DBService {
         }
     }
 
+
+    async selectAllByTableName(tableName) {
+        try {
+            const r = await this.clickdb.query({ query: `SELECT * FROM ${tableName}` });
+            return (await r.json()).data;
+        } catch (error) {
+            throw error;
+        }
+    }
     async insertNPCIDataToDB(txns: any[]) {
         const batchSize = 30000;
         const retries = 10;
@@ -116,19 +171,25 @@ export class DBService {
         console.log(`Total of ${txns.length} missing/invalid transactions processed successfully`);
     }
 
+    async getLastUploadId() {
+        const query = `SELECT MAX(UPLOAD_ID) FROM FILE_UPLOAD_HISTORY`;
+        const result = await this.clickdb.query({ query });
+        const record = (await result.json()).data[0]['MAX(UPLOAD_ID)'];
+        return record == null || record == undefined || record == '' ? 0 : record
+    }
+
     async insertFileHistory(fileUploads: IFileUpload[]) {
+        console.log("Inserting file history records=>", fileUploads);
         const maxRetries = 10;
         const currentDateTimeISO = new Date().toISOString(); // Get the current date and time in ISO format
-        const query = `INSERT INTO FILE_UPLOAD_HISTORY (FILENAME, SIZE, UPLOAD_DATE, UPLOAD_BY, FILE_TYPE, DATACOUNT) VALUES`;
+        const query = `INSERT INTO FILE_UPLOAD_HISTORY (UPLOAD_ID, FILENAME, SIZE, UPLOAD_DATE, TXNCOUNT,  UPLOAD_BY, FILE_TYPE) VALUES`;
         console.log('file upload history insertion started');
 
-        //remove duplicates
-        const uniqueFileUploads = fileUploads.filter((file) => file.isDuplicate !== true);
-        if (uniqueFileUploads.length == 0) {
-            return;
-        }
-        const values = uniqueFileUploads.map(file => (
-            `('${file.fileName}', '${file.fileSize}', '${currentDateTimeISO}', '${file.uploadBy}', '${file.fileType}', '${file.count}')`
+        //remove undefined fileUploadsId
+        fileUploads = fileUploads.filter(file => file.uploadId != undefined || !isNaN(file.uploadId));
+
+        const values = fileUploads.map(file => (
+            `('${file.uploadId}', '${file.fileName}', '${file.fileSize}', '${currentDateTimeISO}','${file.count}', '${file.uploadBy}', '${file.fileType}')`
         )).join(', ');
 
         let attempt = 0;
@@ -161,6 +222,7 @@ export class DBService {
 
     deleteHistory(fileName: string, tableName: string, fileType: string, uploadDate: string, txnDate: string) {
         try {
+
             const query = `DELETE FROM FILE_UPLOAD_HISTORY WHERE fileName = '${fileName}' AND FILE_TYPE = '${fileType}' AND UPLOAD_DATE = '${uploadDate}'`;
             return this.clickdb.exec({ query }).then(() => {
                 return this.clickdb.exec({ query: `DELETE FROM ${tableName} WHERE TXN_DATE = '${txnDate}'` });
@@ -172,6 +234,7 @@ export class DBService {
 
 
     async fetchExistingTxnIdsFromDB(tableName: string, upiTxnIds: string[]): Promise<string[]> {
+
         const query = `
         SELECT UPI_TXN_ID
         FROM ${tableName}

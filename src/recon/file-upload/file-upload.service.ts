@@ -16,6 +16,7 @@ export interface IFileUpload {
     count: number;
     uploadBy: string;
     isDuplicate?: boolean;
+    uploadId?: number;
 }
 
 @Injectable()
@@ -26,6 +27,7 @@ export class FileUploadService {
     private invalidTXNS: any[] = [];
     private validTXNS: any[] = [];
 
+    private fileUploadHistoryData: IFileUpload[] = [];
     constructor(
         private dbSvc: DBService,
         @InjectClickHouse() private readonly clickdb: ClickHouseClient,
@@ -35,14 +37,12 @@ export class FileUploadService {
     async checkDuplicateUploads(files: Multer.File[], isSwitch: boolean): Promise<IFileUpload[]> {
         const uploadedFiles = await this.getUploadedFileHistory();
         const response: IFileUpload[] = [];
-
         this.ensureUploadPathExists();
-
         const fileProcessingPromises = files.map((file, idx) =>
             this.processSingleFile(file, isSwitch, uploadedFiles, response, idx)
         );
-
         await Promise.all(fileProcessingPromises);
+        this.fileUploadHistoryData = response;
         return response;
     }
 
@@ -81,18 +81,25 @@ export class FileUploadService {
 
     private createFileUploadResponse(file: Multer.File, isSwitch: boolean, isDuplicate: boolean, count: number): IFileUpload {
         return {
+
             fileName: file.originalname,
             fileSize: file.size,
-            fileType: isSwitch ? 'SWITCH' : 'NPCI',
             count: count,
+            fileType: isSwitch ? 'SWITCH' : 'NPCI',
             uploadBy: '',
             isDuplicate: isDuplicate,
         };
     }
 
     private cleanupFile(filePath: string, resolve: () => void) {
-        fs.unlinkSync(filePath);
-        resolve();
+        console.log(filePath);
+        try {
+            fs.unlinkSync(filePath);
+            resolve();
+        } catch (error) {
+            resolve();
+        }
+
     }
 
     async validateAndStoreFiles(files: Multer.File[], isSwitchFile: boolean) {
@@ -100,15 +107,31 @@ export class FileUploadService {
             const startTime = performance.now();
             this.ensureUploadPathExists();
 
+
             const response = await this.checkDuplicateUploads(files, isSwitchFile);
 
             const nonDuplicateFiles = files.filter(file =>
                 !response.some(res => res.fileName === file.originalname && res.isDuplicate)
             );
 
+
             if (nonDuplicateFiles.length === 0) {
                 return { status: false, msg: 'File was already uploaded into the portal earlier' };
             }
+
+            let lastId = parseInt(await this.dbSvc.getLastUploadId());
+            nonDuplicateFiles.forEach(file => {
+                lastId++;
+                this.fileUploadHistoryData.push({
+                    fileName: file.originalname,
+                    fileSize: file.size,
+                    fileType: isSwitchFile ? 'SWITCH' : 'NPCI',
+                    count: 0, // To be updated later
+                    uploadBy: '', // Set appropriately
+                    isDuplicate: false,
+                    uploadId: lastId,
+                });
+            });
 
             await this.processFiles(nonDuplicateFiles, isSwitchFile);
             await this.storeDataToDatabase(isSwitchFile);
@@ -125,29 +148,47 @@ export class FileUploadService {
         }
     }
 
-    private async processFiles(files: Multer.File[], isSwitchFile: boolean) {
-        const fileProcessingPromises = files.map(file => this.processFile(file, isSwitchFile));
+    private async processFiles(nonDuplicateFiles: Multer.File[], isSwitchFile: boolean) {
+        const fileProcessingPromises = this.fileUploadHistoryData.map(fileRecord => {
+            const file = nonDuplicateFiles.find(f => f.originalname === fileRecord.fileName);
+            if (file) {
+                return this.processFile(file, isSwitchFile, fileRecord.uploadId);
+            }
+            return Promise.resolve(); // No-op for unmatched files
+
+        });
         await Promise.all(fileProcessingPromises);
     }
 
-    private async processFile(file: Multer.File, isSwitchFile: boolean): Promise<void> {
+    private async processFile(file: Multer.File, isSwitchFile: boolean, uploadId: number): Promise<void> {
         const filePath = path.join(this.uploadPath, file.originalname);
         const headers = this.getHeaders(isSwitchFile);
 
         fs.writeFileSync(filePath, file.buffer);
 
+        let recordCount = 0;
+
         return new Promise<void>((resolve, reject) => {
             fs.createReadStream(filePath)
                 .pipe(csv({ headers }))
-                .on('data', (data) => this.handleCSVData(data, isSwitchFile))
-                .on('end', () => this.cleanupFile(filePath, resolve))
+                .on('data', (data) => {
+                    this.handleCSVData(data, isSwitchFile, uploadId);
+                    recordCount++;
+                })
+                .on('end', () => {
+                    // Update the file count in fileUploadHistoryData
+                    const fileRecord = this.fileUploadHistoryData.find(f => f.uploadId === uploadId);
+                    if (fileRecord) {
+                        fileRecord.count = recordCount;
+                    }
+                    this.cleanupFile(filePath, resolve);
+                })
                 .on('error', (error) => reject(error));
         });
     }
 
-    private handleCSVData(data: any, isSwitchFile: boolean) {
-        const mappedData = this.validator.mapData(data, isSwitchFile);
-
+    private handleCSVData(data: any, isSwitchFile: boolean, uploadId: number) {
+        const mappedData = this.validator.mapData(data, isSwitchFile, uploadId);
         if (!this.validator.validateRow(mappedData)) {
             this.invalidTXNS.push(mappedData);
         } else if (this.transactionIds.has(mappedData['UPI_TXN_ID'])) {
@@ -188,6 +229,7 @@ export class FileUploadService {
 
         await this.dbSvc.insertJunkDataToDB(this.invalidTXNS, isSwitchFile, 'INVALID_TXN');
         await this.dbSvc.insertJunkDataToDB(this.duplicateTXNS, isSwitchFile, 'DUPLICATE_TXN');
+        await this.dbSvc.insertFileHistory(this.fileUploadHistoryData);
     }
 
     private cleanupAfterProcessing() {

@@ -7,9 +7,9 @@ export class ReconController {
   constructor(private readonly reconService: ReconService) {
   }
 
-  @Post('/initiate2WayRecon')
-  async initiate2WayRecon(date: string) {
-    return await this.reconService.initiate2WayRecon(date);
+  @Get('/initiate2WayRecon')
+  async initiate2WayRecon() {
+    return await this.reconService.initiate2WayRecon();
   }
 
   @Get('/getTotalTXNCountByDate/:date')
