@@ -59,7 +59,6 @@ export class DBService {
         }
     }
 
-
     async insertSwitchDataToDB(txns: any[]) {
         const batchSize = 30000;
         const retries = 10;
@@ -90,7 +89,6 @@ export class DBService {
             }
         }
     }
-
 
     async selectAllByTableName(tableName) {
         try {

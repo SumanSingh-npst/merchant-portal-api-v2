@@ -35,7 +35,7 @@ export class FileUploadService {
     ) { }
 
     async checkDuplicateUploads(files: Multer.File[], isSwitch: boolean): Promise<IFileUpload[]> {
-        const uploadedFiles = await this.getUploadedFileHistory();
+        const uploadedFiles = await this.getFileUploadedHistory();
         const response: IFileUpload[] = [];
         this.ensureUploadPathExists();
         const fileProcessingPromises = files.map((file, idx) =>
@@ -107,7 +107,6 @@ export class FileUploadService {
             const startTime = performance.now();
             this.ensureUploadPathExists();
 
-
             const response = await this.checkDuplicateUploads(files, isSwitchFile);
 
             const nonDuplicateFiles = files.filter(file =>
@@ -120,17 +119,17 @@ export class FileUploadService {
             }
 
             let lastId = parseInt(await this.dbSvc.getLastUploadId());
-            nonDuplicateFiles.forEach(file => {
+            this.fileUploadHistoryData = nonDuplicateFiles.map(file => {
                 lastId++;
-                this.fileUploadHistoryData.push({
+                return {
                     fileName: file.originalname,
                     fileSize: file.size,
                     fileType: isSwitchFile ? 'SWITCH' : 'NPCI',
-                    count: 0, // To be updated later
+                    count: 0, // To be updated after processing
                     uploadBy: '', // Set appropriately
                     isDuplicate: false,
                     uploadId: lastId,
-                });
+                };
             });
 
             await this.processFiles(nonDuplicateFiles, isSwitchFile);
@@ -155,7 +154,6 @@ export class FileUploadService {
                 return this.processFile(file, isSwitchFile, fileRecord.uploadId);
             }
             return Promise.resolve(); // No-op for unmatched files
-
         });
         await Promise.all(fileProcessingPromises);
     }
@@ -227,6 +225,7 @@ export class FileUploadService {
             await this.dbSvc.insertNPCIDataToDB(this.validTXNS);
         }
 
+        console.log('duplicate txn length=>', this.duplicateTXNS.length);
         await this.dbSvc.insertJunkDataToDB(this.invalidTXNS, isSwitchFile, 'INVALID_TXN');
         await this.dbSvc.insertJunkDataToDB(this.duplicateTXNS, isSwitchFile, 'DUPLICATE_TXN');
         await this.dbSvc.insertFileHistory(this.fileUploadHistoryData);
@@ -251,7 +250,7 @@ export class FileUploadService {
         }
     }
 
-    async getUploadedFileHistory() {
+    async getFileUploadedHistory() {
         try {
             const query = `SELECT * FROM FILE_UPLOAD_HISTORY`;
             const result = await this.clickdb.query({ query });

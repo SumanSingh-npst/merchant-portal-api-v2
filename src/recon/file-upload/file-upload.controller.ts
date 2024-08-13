@@ -27,7 +27,7 @@ export class FileUploadController {
 
     @Get('/history')
     async getUploadedFileHistory() {
-        return await this.fileUploadService.getUploadedFileHistory();
+        return await this.fileUploadService.getFileUploadedHistory();
 
     }
 
