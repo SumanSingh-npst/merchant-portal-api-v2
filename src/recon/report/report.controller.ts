@@ -23,6 +23,36 @@ export class ReportController {
         return await this.reportSvc.getSwitchTXN(body.startDate, body.endDate, body.startPosition, body.offset);
     }
 
+    @Post('/getReconTXN')
+    async getReconTXN(@Body() body: { startDate: string, endDate: string, startPosition: number, offset: number }) {
+        const { startDate, endDate, startPosition, offset } = body;
+        // Validate date format using regular expression
+        const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateFormatRegex.test(startDate) || !dateFormatRegex.test(endDate)) {
+            throw new BadRequestException('Invalid date format. Please use yyyy-mm-dd format.');
+        }
+
+        // Validate startPosition and offset
+        if (startPosition < 0 || offset <= 0) {
+            throw new BadRequestException('Invalid startPosition or offset. startPosition must be >= 0 and offset must be > 0.');
+        }
+        return await this.reportSvc.getReconTXN(body.startDate, body.endDate, body.startPosition, body.offset);
+    }
+
+
+    @Post('/getReconCountByDate')
+    async getReconCountByDate(@Body() body: { startDate: string, endDate: string }) {
+        const { startDate, endDate } = body;
+        // Validate date format using regular expression
+        const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateFormatRegex.test(startDate) || !dateFormatRegex.test(endDate)) {
+            throw new BadRequestException('Invalid date format. Please use yyyy-mm-dd format.');
+        }
+        return await this.reportSvc.getReconCountByDate(body.startDate, body.endDate);
+    }
+
+
+
     @Post('/getInvalidTXN')
     async getInvalidTXN(@Body() body: { startDate: string, endDate: string, startPosition: number, offset: number }) {
         const { startDate, endDate, startPosition, offset } = body;

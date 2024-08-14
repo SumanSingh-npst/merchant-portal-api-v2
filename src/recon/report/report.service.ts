@@ -36,6 +36,37 @@ export class ReportService {
         }
     }
 
+    async getReconTXN(startDate: string, endDate: string, startPosition: number, offset: number) {
+        try {
+            console.log(startDate, endDate, startPosition, offset);
+            const query = `SELECT * FROM TWOWAY_RECON_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
+            const res = await this.clickdb.query({ query });
+            const data = await res.json();
+            return data.data;
+        } catch (error) {
+            console.error('Error fetching transactions:', error);
+            throw new Error('Error fetching transactions');
+        }
+    }
+
+    async getReconCountByDate(startDate: string, endDate: string) {
+        try {
+            const query = `SELECT COUNT(*) AS COUNT, SUM (AMOUNT) AS AMOUNT FROM TWOWAY_RECON_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
+            const res = await this.clickdb.query({ query });
+            const data: any = (await res.json()).data[0]; // Extract the first (and only) object from the array
+
+            return {
+                count: parseInt(data.COUNT, 10),
+                amount: parseFloat(parseFloat(data.AMOUNT).toFixed(2))
+            };
+
+        } catch (error) {
+            console.error('Error fetching transactions:', error);
+            throw new Error('Error fetching transactions');
+        }
+    }
+
+
     async getInvalidTXN(startDate: string, endDate: string, startPosition: number, offset: number) {
         try {
             const query = `SELECT * FROM INVALID_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;

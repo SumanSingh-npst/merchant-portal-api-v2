@@ -8,8 +8,9 @@ import { DBService } from './file-upload/db.service';
 import { ReportController } from './report/report.controller';
 import { ReportService } from './report/report.service';
 import { DbController } from './file-upload/db.controller';
+import { CustomLogger } from 'src/custom-logger';
 @Module({
   controllers: [ReconController, FileUploadController, ReportController, DbController],
-  providers: [ReconService, FileUploadService, FileValidationService, DBService, ReportService],
+  providers: [ReconService, FileUploadService, FileValidationService, DBService, ReportService, CustomLogger],
 })
 export class ReconModule { }
