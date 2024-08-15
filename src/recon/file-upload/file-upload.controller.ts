@@ -28,7 +28,6 @@ export class FileUploadController {
     @Get('/history')
     async getUploadedFileHistory() {
         return await this.fileUploadService.getFileUploadedHistory();
-
     }
 
     @Post('/checkDuplicateUploads')
@@ -37,6 +36,4 @@ export class FileUploadController {
         console.log('duplicate check starts....')
         return await this.fileUploadService.checkDuplicateUploads(files, false);
     }
-
-
 }

@@ -106,18 +106,13 @@ export class FileUploadService {
         try {
             const startTime = performance.now();
             this.ensureUploadPathExists();
-
             const response = await this.checkDuplicateUploads(files, isSwitchFile);
-
             const nonDuplicateFiles = files.filter(file =>
                 !response.some(res => res.fileName === file.originalname && res.isDuplicate)
             );
-
-
             if (nonDuplicateFiles.length === 0) {
                 return { status: false, msg: 'File was already uploaded into the portal earlier' };
             }
-
             let lastId = parseInt(await this.dbSvc.getLastUploadId());
             this.fileUploadHistoryData = nonDuplicateFiles.map(file => {
                 lastId++;
@@ -134,10 +129,8 @@ export class FileUploadService {
 
             await this.processFiles(nonDuplicateFiles, isSwitchFile);
             await this.storeDataToDatabase(isSwitchFile);
-
             const processingTime = (performance.now() - startTime) / 60000;
             console.log(`File processing took ${processingTime} minutes`);
-
             return { status: true, duplicateFiles: response, msg: `File processing took ${processingTime} minutes` };
         } catch (error) {
             console.error('Error during file processing:', error);
@@ -161,11 +154,8 @@ export class FileUploadService {
     private async processFile(file: Multer.File, isSwitchFile: boolean, uploadId: number): Promise<void> {
         const filePath = path.join(this.uploadPath, file.originalname);
         const headers = this.getHeaders(isSwitchFile);
-
         fs.writeFileSync(filePath, file.buffer);
-
         let recordCount = 0;
-
         return new Promise<void>((resolve, reject) => {
             fs.createReadStream(filePath)
                 .pipe(csv({ headers }))
@@ -252,7 +242,7 @@ export class FileUploadService {
 
     async getFileUploadedHistory() {
         try {
-            const query = `SELECT * FROM FILE_UPLOAD_HISTORY`;
+            const query = `SELECT * FROM FILE_UPLOAD_HISTORY ORDER BY FILE_UPLOAD_HISTORY.UPLOAD_DATE DESC;`;
             const result = await this.clickdb.query({ query });
             const jsonResult: any = await result.json();
 

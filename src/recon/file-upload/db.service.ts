@@ -3,11 +3,9 @@ import { InjectClickHouse } from "@md03/nestjs-clickhouse";
 import { FileValidationService } from "./file-validation.service";
 import { Injectable } from "@nestjs/common";
 import { IFileUpload } from "./file-upload.service";
-import { table } from "console";
 
 @Injectable()
 export class DBService {
-
 
     constructor(
         @InjectClickHouse() private readonly clickdb: ClickHouseClient, private validator: FileValidationService
@@ -36,6 +34,8 @@ export class DBService {
             throw error;
         }
     }
+
+
 
     async getAllCount() {
 
@@ -230,18 +230,23 @@ export class DBService {
         }
     }
 
-
-    async fetchExistingTxnIdsFromDB(tableName: string, upiTxnIds: string[]): Promise<string[]> {
-
-        const query = `
-        SELECT UPI_TXN_ID
-        FROM ${tableName}
-        WHERE UPI_TXN_ID IN (${upiTxnIds.map(id => `'${id}'`).join(',')})
-        AND TXN_DATE >= today() - 3
-    `;
-        const existingTxnIds = await this.clickdb.query({ query });
-        const results = await existingTxnIds.json();
-        return results.data.map((row: any) => row.UPI_TXN_ID);
+    async fetchExistingTxnIdsFromDB(tableName: string, upiTxnIds: string[], batchSize: number = 1000): Promise<string[]> {
+        const existingTxnIds: string[] = [];
+        console.log('recieved total of ', upiTxnIds.length, 'txn ids');
+        for (let i = 0; i < upiTxnIds.length; i += batchSize) {
+            const batch = upiTxnIds.slice(i, i + batchSize);
+            const query = `
+            SELECT UPI_TXN_ID
+            FROM ${tableName}
+            WHERE TXN_DATE >= today() - 3
+            AND UPI_TXN_ID IN (${batch.map(id => `'${id}'`).join(',')})            
+        `;
+            const result = await this.clickdb.query({ query });
+            const data = await result.json();
+            existingTxnIds.push(...data.data.map((row: any) => row.UPI_TXN_ID));
+        }
+        console.log('fetching txn id completed successfully');
+        return existingTxnIds;
     }
 
 }
