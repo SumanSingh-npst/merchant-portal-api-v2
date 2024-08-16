@@ -11,16 +11,8 @@ export class DBService {
         @InjectClickHouse() private readonly clickdb: ClickHouseClient, private validator: FileValidationService
     ) { }
 
-
     async truncateAll() {
-        const query = `TRUNCATE TABLE SWITCH_TXN;
-        TRUNCATE TABLE NPCI_TXN;
-        TRUNCATE TABLE INVALID_TXN;
-        TRUNCATE TABLE DUPLICATE_TXN;
-        TRUNCATE TABLE TWOWAY_RECON_TXN;
-        TRUNCATE TABLE NON_RECON_TXN;
-        TRUNCATE TABLE FILE_UPLOAD_HISTORY;
-        `
+
         try {
             this.clickdb.command({ query: 'TRUNCATE TABLE SWITCH_TXN' });
             this.clickdb.command({ query: 'TRUNCATE TABLE NPCI_TXN' });
@@ -55,7 +47,7 @@ export class DBService {
             });
             return queries;
         } catch (error) {
-            throw error;
+            return error;
         }
     }
 
@@ -67,6 +59,7 @@ export class DBService {
         for (let i = 0; i < txns.length; i += batchSize) {
             const batch = txns.slice(i, i + batchSize);
             console.log(`inside batch ${i} to ${i + batchSize}`);
+
             const query = `
       INSERT INTO SWITCH_TXN (TXN_DATE,TXN_TIME, AMOUNT, UPICODE, STATUS, RRN, EXT_TXN_ID, PAYER_VPA, NOTE, PAYEE_VPA, UPI_TXN_ID, MCC) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
     `;
