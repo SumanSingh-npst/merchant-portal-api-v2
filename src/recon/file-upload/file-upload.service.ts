@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as csv from 'csv-parser';
@@ -21,6 +21,7 @@ export interface IFileUpload {
 
 @Injectable()
 export class FileUploadService {
+
     private readonly uploadPath = path.join(__dirname, '..', 'uploads');
     private transactionIds = new Set<string>();
     private duplicateTXNS: any[] = [];
@@ -111,7 +112,7 @@ export class FileUploadService {
                 !response.some(res => res.fileName === file.originalname && res.isDuplicate)
             );
             if (nonDuplicateFiles.length === 0) {
-                return { status: false, msg: 'File was already uploaded into the portal earlier' };
+                return { status: false, msg: 'some files are already uploaded into the portal earlier. remove them and reupload' };
             }
             let lastId = parseInt(await this.dbSvc.getLastUploadId());
             this.fileUploadHistoryData = nonDuplicateFiles.map(file => {
@@ -128,6 +129,7 @@ export class FileUploadService {
             });
 
             await this.processFiles(nonDuplicateFiles, isSwitchFile);
+
             await this.storeDataToDatabase(isSwitchFile);
             const processingTime = (performance.now() - startTime) / 60000;
             console.log(`File processing took ${processingTime} minutes`);
@@ -175,7 +177,10 @@ export class FileUploadService {
         });
     }
 
+
+
     private handleCSVData(data: any, isSwitchFile: boolean, uploadId: number) {
+
         const mappedData = this.validator.mapData(data, isSwitchFile, uploadId);
         if (!this.validator.validateRow(mappedData)) {
             this.invalidTXNS.push(mappedData);
@@ -245,11 +250,11 @@ export class FileUploadService {
             const query = `SELECT * FROM FILE_UPLOAD_HISTORY ORDER BY FILE_UPLOAD_HISTORY.UPLOAD_DATE DESC;`;
             const result = await this.clickdb.query({ query });
             const jsonResult: any = await result.json();
-
             return jsonResult.data.map((row: any) => ({
+                uploadId: row.UPLOAD_ID,
                 fileName: row.FILENAME,
                 fileType: row.FILE_TYPE,
-                count: row.DATACOUNT,
+                count: row.TXNCOUNT,
                 size: parseInt(row.SIZE, 10),
                 uploadedOn: row.UPLOAD_DATE,
                 uploadedBy: row.UPLOAD_BY,
@@ -261,4 +266,18 @@ export class FileUploadService {
     }
 
 
+    async deleteFileHistory(fileName: string, uploadId: number, fileType: string) {
+        try {
+            //step 1: first remove all the existing data with the upload_id from Switch and NPCI table
+
+            fileType === 'SWITCH' ? await this.clickdb.exec({ query: `DELETE FROM SWITCH_TXN WHERE UPLOAD_ID = '${uploadId}';` }) : await this.clickdb.exec({ query: `DELETE FROM NPCI_TXN WHERE UPLOAD_ID = '${uploadId}';` });
+            const query = `DELETE FROM FILE_UPLOAD_HISTORY WHERE FILENAME = '${fileName}';`;
+            const res = await this.clickdb.exec({ query });
+            console.log(res.summary);
+            return true;
+        } catch (error) {
+            console.log(error);
+            throw new HttpException('Error deleting file history', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

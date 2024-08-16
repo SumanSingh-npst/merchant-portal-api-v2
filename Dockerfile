@@ -44,3 +44,6 @@ CMD ["node", "dist/main"]
 #Step 7: remove the stopped container using command docker rm merchant-portal-api-v2
 #Step 8: remove the docker image using command docker rmi chandansutradhar/merchant-portal-api-v2
 #To check logs - sudo docker logs <container_id>
+##TODO: docker container should restart on app exception
+##TODO: log should be written into a local volume
+

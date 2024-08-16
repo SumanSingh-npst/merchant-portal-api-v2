@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class FileValidationService {
+
+    payeeVpa = `^[a-zA-Z0-9]+\.[a-zA-Z0-9]+@timecosmos$`;
     mapData(data: any, isSwitchFile: boolean, uploadId: number) {
         let rows: any = {};
         rows['UPLOAD_ID'] = uploadId;
@@ -13,9 +15,14 @@ export class FileValidationService {
         rows['PAYER_VPA'] = data['PAYER_VPA'];
         rows['MCC'] = data['MCC'];
         if (isSwitchFile) {
-            let txnDateTime = data["TXN_DATE"].split(" "); // 2024-07-16 or 16-07-2024
-            rows["TXN_DATE"] = this.convertSwitchDateFormat(txnDateTime[0]);
-            rows["TXN_TIME"] = txnDateTime[1]; // Time part
+            try {
+                let txnDateTime = data["TXN_DATE"].split(" "); // 2024-07-16 or 16-07-2024
+                rows["TXN_DATE"] = this.convertSwitchDateFormat(txnDateTime[0]);
+                rows["TXN_TIME"] = txnDateTime[1]; // Time part
+            } catch (err) {
+                rows['TXN_DATE'] = null;
+                rows['TXN_TIME'] = null;
+            }
             rows['STATUS'] = data['STATUS'];
             rows['NOTE'] = data['NOTE'];
         } else {
@@ -47,6 +54,7 @@ export class FileValidationService {
     }
     validateRow(row: any) {
         let isValid = true;
+        const clickhouseFormat = /^\d{4}-\d{2}-\d{2}$/
         const payeeIsNotTimecosmos = /^[a-zA-Z0-9]+\.[a-zA-Z0-9]+@timecosmos$/;
         const amount = /^\d+(?:\.\d{1,2})?$/;
         // Removing the first row into invalid txn
@@ -56,11 +64,16 @@ export class FileValidationService {
             isValid = false;
         } else if (!amount.test(row.AMOUNT)) {
             isValid = false;
+        } else if (!clickhouseFormat.test(row.TXN_DATE)) {
+            isValid = false;
         }
         return isValid;
     }
 
-
+    isHeaderOrFooter(row: any) {
+        if (row['PAYEE_VPA'])
+            return true;
+    }
     convertNPCIDate(dateStr) {
         //check using regex if it has 6 digits
         if (dateStr == undefined || dateStr == null) {
@@ -83,21 +96,25 @@ export class FileValidationService {
             return null;
         }
     }
+
+
     convertSwitchDateFormat(dateString: string): string {
         const isoFormat = /^\d{4}-\d{2}-\d{2}$/;
         if (isoFormat.test(dateString)) {
             return dateString;
         }
 
-        // Check if the date is in DD-MM-YYYY format
+        // Check if the date is in DD-MM-YYYY format or YYYY-DD-MM format
         const europeanFormat = /^\d{2}-\d{2}-\d{4}$/;
+        const yyyymmddFormat = /^\d{4}-\d{2}-\d{2}$/
         if (europeanFormat.test(dateString)) {
             const [day, month, year] = dateString.split('-');
             return `${year}-${month}-${day}`;
+        } else if (yyyymmddFormat.test(dateString)) {
+            const [year, month, day] = dateString.split('-');
+            return `${year}-${month}-${day}`;
         }
-
         throw new Error('Invalid date format');
-
     }
 
 
