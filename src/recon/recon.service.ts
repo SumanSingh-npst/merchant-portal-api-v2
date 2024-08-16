@@ -36,7 +36,7 @@ export class ReconService {
                 }
                 this.logger.error(`Error: ${error.message}. Retrying in ${delay}ms...`, error);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                await executeWithRetry(fn, retries - 1, delay * 2); // Exponential backoff
+                await executeWithRetry(fn, retries - 1, delay * 1); // Exponential backoff
             }
         };
 
@@ -49,6 +49,7 @@ export class ReconService {
                 await this.deleteFromTables(matchedData, executeWithRetry, maxRetries, retryDelay);
             } else {
                 this.logger.log('No matching transactions found.');
+                return;
             }
         } catch (error) {
             this.logger.error('Error during performRecon', error.stack);
@@ -71,13 +72,23 @@ export class ReconService {
         WHERE N.UPICODE IN ('0', '00', 'RB');
     `;
 
-        const matchingRecords = await executeWithRetry(() => this.clickdb.query({ query: matchingRecordsQuery }));
-        return (await matchingRecords.json()).data;
+        //        const matchingRecordsResponse = await executeWithRetry(() => this.clickdb.query({ query: matchingRecordsQuery }));
+        const matchingRecordsResponse = await this.clickdb.query({ query: matchingRecordsQuery });
+
+        console.log(matchingRecordsResponse);
+        if (matchingRecordsResponse && typeof matchingRecordsResponse.json === 'function') {
+            const matchingRecordsJson = await matchingRecordsResponse.json();
+            return matchingRecordsJson.data || [];
+        } else {
+            // Handle the case where the response does not have a json method
+            throw new Error('Unexpected response format from query execution');
+        }
     }
 
     private async insertIntoTwoWayRecon(matchedData: any[], executeWithRetry: Function, maxRetries: number, retryDelay: number): Promise<void> {
-        const batchSize = 10000;
-        for (let i = 0; i < matchedData.length; i += batchSize) {
+        const batchSize = 50000;
+        const matchLength = matchedData.length;
+        for (let i = 0; i < matchLength; i += batchSize) {
             const batch = matchedData.slice(i, i + batchSize);
             const values = batch.map(row => `(
             '${row.UPI_TXN_ID}', '${row.TXN_DATE}', '${row.TXN_TIME}', ${row.AMOUNT}, 
@@ -92,6 +103,7 @@ export class ReconService {
             VALUES ${values};
         `;
 
+            console.log(`inserting ${batch.length} rows of ${matchLength} records into TWO_WAY_RECON...`);
             await executeWithRetry(() => this.clickdb.exec({ query: insertQuery }), maxRetries, retryDelay);
         }
         this.logger.log('Matched transactions moved to TWOWAY_RECON_TXN successfully.');
@@ -107,18 +119,19 @@ export class ReconService {
             ALTER TABLE SWITCH_TXN 
             DELETE WHERE UPI_TXN_ID IN (${upiTxnIds});
         `;
-            await executeWithRetry(() => this.clickdb.query({ query: deleteSwitchTxnQuery }), maxRetries, retryDelay);
+            console.log(`deleting ${batch.length} rows of ${matchedData.length} records from SWITCH_TXN...`);
 
+            await executeWithRetry(() => this.clickdb.query({ query: deleteSwitchTxnQuery }), maxRetries, retryDelay);
+            console.log(`deleted SWITCH_TXN successfully`);
             const deleteNpcTxnQuery = `
             ALTER TABLE NPCI_TXN 
             DELETE WHERE UPI_TXN_ID IN (${upiTxnIds});
         `;
+            console.log(`deleting ${batch.length} rows of ${matchedData.length} records from NPCI_TXN...`);
             await executeWithRetry(() => this.clickdb.query({ query: deleteNpcTxnQuery }), maxRetries, retryDelay);
         }
-        this.logger.log('Matched transactions deleted from SWITCH_TXN and NPCI_TXN successfully.');
+        this.logger.log('deletion activities completed successfully.');
     }
-
-
 
     private notifyCompletion(): void {
         this.logger.log('Sending notification of reconciliation completion...');
