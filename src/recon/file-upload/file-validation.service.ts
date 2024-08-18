@@ -75,21 +75,16 @@ export class FileValidationService {
             return true;
     }
     convertNPCIDate(dateStr) {
+        //npci date from psp is mmddyy eg 071624
         //check using regex if it has 6 digits
         if (dateStr == undefined || dateStr == null) {
             return null;
         }
-        const dateRegex = /^(\d{2})(\d{2})(\d{2})$/; // ddmmyy
+        const dateRegex = /^(\d{2})(\d{2})(\d{2})$/; // 
         let match = dateStr.match(dateRegex);
         if (match) {
             //split the date into 3 parts
-            let [_, day, month, year] = match;
-            if (parseInt(month) > 12) {
-                //switch day and month
-                let temp = day;
-                day = month;
-                month = temp;
-            }
+            let [_, month, day, year] = match;
             year = '20' + year;
             return `${year}-${month}-${day}`;
         } else {

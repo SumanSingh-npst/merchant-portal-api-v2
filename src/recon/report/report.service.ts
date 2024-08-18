@@ -11,47 +11,26 @@ export class ReportService {
 
 
 
-    async getMissingTXNS(queryDate: Date) {
+    async getAllTXN(startDate: string, endDate: string, startPosition: number, offset: number, txnType: string) {
         try {
-            const date = new Date(queryDate);
-            const query = await this.clickdb.query({ query: `SELECT * FROM MISSING_TXN WHERE TXN_DATE='${date}'` });
-            return await query.json();
 
-        } catch (error) {
-            console.error(error)
-            return error;
-        }
-    }
-
-    async getSwitchTXN(startDate: string, endDate: string, startPosition: number, offset: number) {
-        try {
-            const query = `SELECT * FROM SWITCH_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
+            const query = `SELECT * FROM ${txnType} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
+            console.log(`query= ${query}`);
             const res = await this.clickdb.query({ query });
             const data = await res.json();
             return data.data;
 
         } catch (error) {
-            console.error('Error fetching transactions:', error);
-            throw new Error('Error fetching transactions');
+            console.error('Error fetching npci transactions:', error);
+            throw new Error('Error fetching npci transactions' + error);
         }
+
     }
 
-    async getReconTXN(startDate: string, endDate: string, startPosition: number, offset: number) {
-        try {
-            console.log(startDate, endDate, startPosition, offset);
-            const query = `SELECT * FROM TWOWAY_RECON_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
-            const res = await this.clickdb.query({ query });
-            const data = await res.json();
-            return data.data;
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-            throw new Error('Error fetching transactions');
-        }
-    }
 
     async getReconCountByDate(startDate: string, endDate: string) {
         try {
-            const query = `SELECT COUNT(*) AS COUNT, SUM (AMOUNT) AS AMOUNT FROM TWOWAY_RECON_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
+            const query = `SELECT COUNT(*) AS COUNT, SUM (AMOUNT) AS AMOUNT FROM RECON_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
             const res = await this.clickdb.query({ query });
             const data: any = (await res.json()).data[0]; // Extract the first (and only) object from the array
 
@@ -59,34 +38,6 @@ export class ReportService {
                 count: parseInt(data.COUNT, 10),
                 amount: parseFloat(parseFloat(data.AMOUNT).toFixed(2))
             };
-
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-            throw new Error('Error fetching transactions');
-        }
-    }
-
-
-    async getInvalidTXN(startDate: string, endDate: string, startPosition: number, offset: number) {
-        try {
-            const query = `SELECT * FROM INVALID_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
-            const res = await this.clickdb.query({ query });
-            const data = await res.json();
-            return data.data;
-
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-            throw new Error('Error fetching transactions');
-        }
-    }
-
-
-    async getDuplicateTXN(startDate: string, endDate: string, startPosition: number, offset: number) {
-        try {
-            const query = `SELECT * FROM DUPLICATE_TXN WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
-            const res = await this.clickdb.query({ query });
-            const data = await res.json();
-            return data.data;
 
         } catch (error) {
             console.error('Error fetching transactions:', error);

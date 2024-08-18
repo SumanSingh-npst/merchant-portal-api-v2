@@ -52,7 +52,6 @@ export class FileUploadService {
             fs.mkdirSync(this.uploadPath);
         }
     }
-
     private async processSingleFile(file: Multer.File, isSwitch: boolean, uploadedFiles: IFileUpload[], response: IFileUpload[], idx: number): Promise<void> {
         return new Promise((resolve, reject) => {
             const isDuplicate = uploadedFiles.some(uploadedFile => uploadedFile.fileName === file.originalname);

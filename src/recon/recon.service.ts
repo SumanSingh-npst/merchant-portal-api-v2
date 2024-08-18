@@ -1,7 +1,7 @@
-import { HttpException, HttpStatus, Injectable, LoggerService } from '@nestjs/common';
-import { ClickHouseClient } from '@clickhouse/client';
-import { InjectClickHouse } from '@md03/nestjs-clickhouse';
-import { CustomLogger } from 'src/custom-logger';
+import { ClickHouseClient } from "@clickhouse/client";
+import { InjectClickHouse } from "@md03/nestjs-clickhouse";
+import { Injectable } from "@nestjs/common";
+import { CustomLogger } from "src/custom-logger";
 
 @Injectable()
 export class ReconService {
@@ -9,132 +9,138 @@ export class ReconService {
     constructor(
         @InjectClickHouse() private readonly clickdb: ClickHouseClient,
         private readonly logger: CustomLogger,
-    ) { }
+    ) {
 
-    async initiate2WayRecon(): Promise<any> {
-        this.logger.log('Starting reconciliation process...');
+    }
+
+    async initiateTwoWayRecon() {
+        console.log('Starting reconciliation process...');
         try {
-            await this.performRecon();
+            await this.insertIntoRecon();
+            this.logger.log('Reconciliation records processed successfully.');
+            await this.insertIntoNonRecon();
+            this.logger.log('Non-reconciliation records processed successfully.');
+            await this.performCleanup('SWITCH_TXN');
+            await this.performCleanup('NPCI_TXN');
             this.logger.log('Reconciliation process completed successfully.');
-            this.notifyCompletion();
+            await this.notifyCompletion();
         } catch (error) {
-            this.logger.error('Error during reconciliation process', error.stack);
-            return new HttpException('Reconciliation process failed', HttpStatus.INTERNAL_SERVER_ERROR);
+            console.error('Error during reconciliation process', error.stack);
+            return 'Reconciliation process failed';
         }
     }
 
-    private async performRecon(): Promise<void> {
-        const maxRetries = 10;
-        const retryDelay = 1000; // Initial delay in milliseconds
 
-        const executeWithRetry = async (fn: () => Promise<any>, retries: number = maxRetries, delay: number = retryDelay): Promise<void> => {
+    async insertIntoRecon() {
+        this.logger.log('Inserting into RECON_TXN...');
+        const reconQuery = `INSERT INTO RECON_TXN
+            (TX_TYPE, UPI_TXN_ID, UPICODE, TXN_STATUS, AMOUNT, TXN_DATE, TXN_TIME, RRN,
+            PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER,
+            BEN_IFSC_CODE, BEN_ACC_NUMBER, NOTE)
+            SELECT N.TX_TYPE, N.UPI_TXN_ID, N.UPICODE, S.STATUS, N.AMOUNT, N.TXN_DATE, N.TXN_TIME, N.RRN,
+            N.PAYER_CODE, N.PAYER_VPA, N.PAYEE_CODE, N.PAYEE_VPA, N.MCC, N.REM_IFSC_CODE, N.REM_ACC_NUMBER,
+            N.BEN_IFSC_CODE, N.BEN_ACC_NUMBER, S.NOTE
+            FROM NPCI_TXN AS N INNER JOIN SWITCH_TXN AS S
+            ON N.UPI_TXN_ID = S.UPI_TXN_ID
+            WHERE N.UPICODE IN ('0', '00', 'RB');`;
+        return await this.executeQuery(reconQuery);
+    }
+
+    async insertIntoNonRecon() {
+        this.logger.log('Inserting into NON_RECON_TXN...');
+        //FIRST INSERT ALL MATCHED TRANSACTION BUT WITH FAILED STATUS 
+        const failedQuery = `INSERT INTO NON_RECON_TXN
+            (TX_TYPE, UPI_TXN_ID, UPICODE, TXN_STATUS, AMOUNT, TXN_DATE, TXN_TIME, RRN,
+            PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER,
+            BEN_IFSC_CODE, BEN_ACC_NUMBER, NOTE, IS_SWITCH, IS_NPCI, IS_CBS, UPLOAD_ID)
+            SELECT N.TX_TYPE, N.UPI_TXN_ID, N.UPICODE, S.STATUS, N.AMOUNT, N.TXN_DATE, N.TXN_TIME, N.RRN, 
+            N.PAYER_CODE, N.PAYER_VPA, N.PAYEE_CODE, N.PAYEE_VPA, N.MCC, N.REM_IFSC_CODE, N.REM_ACC_NUMBER, 
+            N.BEN_IFSC_CODE, N.BEN_ACC_NUMBER, S.NOTE, TRUE AS IS_SWITCH, TRUE AS IS_NPCI, FALSE AS IS_CBS, 
+            'MATCHED' AS UPLOAD_ID 
+            FROM NPCI_TXN AS N INNER JOIN SWITCH_TXN AS S 
+            ON N.UPI_TXN_ID = S.UPI_TXN_ID 
+            WHERE N.UPICODE NOT IN ('0', '00', 'RB')`
+        await this.executeQuery(failedQuery);
+        //STEP 2: INSERT ALL NON-MATCHED RECORDS
+        const nonReconQuery = `INSERT INTO NON_RECON_TXN
+            (TX_TYPE, UPI_TXN_ID, UPICODE, TXN_STATUS, AMOUNT, TXN_DATE, TXN_TIME, RRN, PAYER_CODE,
+            PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER, BEN_IFSC_CODE,
+            BEN_ACC_NUMBER, NOTE, IS_SWITCH, IS_NPCI, IS_CBS, UPLOAD_ID)
+            
+            SELECT N.TX_TYPE, N.UPI_TXN_ID, N.UPICODE, 'UNKNOWN' AS TXN_STATUS,
+            N.AMOUNT, N.TXN_DATE, N.TXN_TIME, N.RRN, N.PAYER_CODE, N.PAYER_VPA, N.PAYEE_CODE,
+            N.PAYEE_VPA, N.MCC, N.REM_IFSC_CODE, N.REM_ACC_NUMBER, N.BEN_IFSC_CODE, N.BEN_ACC_NUMBER,  FALSE AS IS_SWITCH, TRUE AS IS_NPCI, FALSE AS IS_CBS, N.UPLOAD_ID
+            FROM NPCI_TXN AS N
+            LEFT JOIN SWITCH_TXN AS S
+            ON N.UPI_TXN_ID = S.UPI_TXN_ID
+            WHERE S.UPI_TXN_ID IS NULL UNION ALL
+            SELECT 'SWITCH' AS TX_TYPE, S.UPI_TXN_ID, NULL AS UPICODE, S.STATUS AS TXN_STATUS,
+            NULL AS AMOUNT, NULL AS TXN_DATE, NULL AS TXN_TIME, NULL AS RRN, NULL AS PAYER_CODE,
+            NULL AS PAYER_VPA, NULL AS PAYEE_CODE, NULL AS PAYEE_VPA, NULL AS MCC, NULL AS REM_IFSC_CODE,
+            NULL AS REM_ACC_NUMBER, NULL AS BEN_IFSC_CODE, NULL AS BEN_ACC_NUMBER, S.NOTE,
+            TRUE AS IS_SWITCH, FALSE AS IS_NPCI, FALSE AS IS_CBS, S.UPLOAD_ID
+            FROM SWITCH_TXN AS S
+            LEFT JOIN NPCI_TXN AS N
+            ON S.UPI_TXN_ID = N.UPI_TXN_ID
+            WHERE N.UPI_TXN_ID IS NULL;`
+    }
+
+
+    async executeQuery(query: string) {
+        let attempt = 0;
+        const maxAttempts = 6;
+        const initialDelay = 2000;
+        while (attempt < maxAttempts) {
             try {
-                await fn();
+                await this.clickdb.exec({ query: query });
+                return; // Exit method if successful
             } catch (error) {
-                if (retries <= 0) {
-                    throw error; // Rethrow the error if no retries left
+                attempt++;
+                const delay = initialDelay * Math.pow(2, attempt - 1); // Exponential backoff
+                this.logger.error(`Attempt ${attempt} failed. Error: ${error.message}`, error);
+
+                if (attempt < maxAttempts) {
+                    this.logger.log(`Retrying in ${delay} ms...`);
+                    await this.delay(delay); // Wait before retrying
+                } else {
+                    this.logger.error(`All ${maxAttempts} attempts failed. query ${query} could not be executed.`, error);
+                    throw error; // Re-throw error if all attempts fail
                 }
-                this.logger.error(`Error: ${error.message}. Retrying in ${delay}ms...`, error);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                await executeWithRetry(fn, retries - 1, delay * 1); // Exponential backoff
             }
-        };
+        }
+    }
+    async performCleanup(tableName: string) {
+        let attempt = 0;
+        const maxAttempts = 6;
+        const initialDelay = 2000;
 
-        try {
-            const matchedData = await this.getMatchingRecords(executeWithRetry);
+        while (attempt < maxAttempts) {
+            try {
+                this.logger.log(`Truncating table ${tableName}...`);
+                await this.clickdb.exec({ query: `TRUNCATE TABLE ${tableName};` });
+                this.logger.log(`Table ${tableName} truncated successfully.`);
+                return; // Exit method if successful
+            } catch (error) {
+                attempt++;
+                const delay = initialDelay * Math.pow(2, attempt - 1); // Exponential backoff
+                this.logger.error(`Attempt ${attempt} failed. Error: ${error.message}`, error);
 
-            if (matchedData.length > 0) {
-                this.logger.log(`Found ${matchedData.length} matching transactions. Moving to TWOWAY_RECON_TXN...`);
-                await this.insertIntoTwoWayRecon(matchedData, executeWithRetry, maxRetries, retryDelay);
-                await this.deleteFromTables(matchedData, executeWithRetry, maxRetries, retryDelay);
-            } else {
-                this.logger.log('No matching transactions found.');
-                return;
+                if (attempt < maxAttempts) {
+                    this.logger.log(`Retrying in ${delay} ms...`);
+                    await this.delay(delay); // Wait before retrying
+                } else {
+                    this.logger.error(`All ${maxAttempts} attempts failed. ${tableName} could not be truncated.`, error);
+                    throw error; // Re-throw error if all attempts fail
+                }
             }
-        } catch (error) {
-            this.logger.error('Error during performRecon', error.stack);
-            throw new Error('Reconciliation process failed during transaction matching');
         }
     }
 
-    private async getMatchingRecords(executeWithRetry: Function): Promise<any[]> {
-        const matchingRecordsQuery = `
-        SELECT 
-          N.UPI_TXN_ID, N.TXN_DATE, N.TXN_TIME, N.AMOUNT, N.PAYER_VPA, N.PAYEE_VPA, 
-          S.STATUS, N.UPICODE, N.RRN, N.MCC, now() AS RECON_DATE, 
-          FALSE AS SETTLEMENT_STATUS, S.UPLOAD_ID AS UPLOAD_ID 
-        FROM 
-          NPCI_TXN AS N 
-        INNER JOIN 
-          SWITCH_TXN AS S 
-        ON 
-          N.UPI_TXN_ID = S.UPI_TXN_ID
-        WHERE N.UPICODE IN ('0', '00', 'RB');
-    `;
-
-        //        const matchingRecordsResponse = await executeWithRetry(() => this.clickdb.query({ query: matchingRecordsQuery }));
-        const matchingRecordsResponse = await this.clickdb.query({ query: matchingRecordsQuery });
-
-        console.log(matchingRecordsResponse);
-        if (matchingRecordsResponse && typeof matchingRecordsResponse.json === 'function') {
-            const matchingRecordsJson = await matchingRecordsResponse.json();
-            return matchingRecordsJson.data || [];
-        } else {
-            // Handle the case where the response does not have a json method
-            throw new Error('Unexpected response format from query execution');
-        }
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    private async insertIntoTwoWayRecon(matchedData: any[], executeWithRetry: Function, maxRetries: number, retryDelay: number): Promise<void> {
-        const batchSize = 50000;
-        const matchLength = matchedData.length;
-        for (let i = 0; i < matchLength; i += batchSize) {
-            const batch = matchedData.slice(i, i + batchSize);
-            const values = batch.map(row => `(
-            '${row.UPI_TXN_ID}', '${row.TXN_DATE}', '${row.TXN_TIME}', ${row.AMOUNT}, 
-            '${row.PAYER_VPA}', '${row.PAYEE_VPA}', '${row.STATUS}', '${row.UPICODE}', 
-            '${row.RRN}', '${row.MCC}', '${row.RECON_DATE}', ${row.SETTLEMENT_STATUS}, 
-            '${row.UPLOAD_ID}'
-        )`).join(', ');
+    async notifyCompletion() {
 
-            const insertQuery = `
-            INSERT INTO TWOWAY_RECON_TXN 
-            (UPI_TXN_ID, TXN_DATE, TXN_TIME, AMOUNT, PAYER_VPA, PAYEE_VPA, TXN_STATUS, UPICODE, RRN, MCC, RECON_DATE, SETTLEMENT_STATUS, UPLOAD_ID)
-            VALUES ${values};
-        `;
-
-            console.log(`inserting ${batch.length} rows of ${matchLength} records into TWO_WAY_RECON...`);
-            await executeWithRetry(() => this.clickdb.exec({ query: insertQuery }), maxRetries, retryDelay);
-        }
-        this.logger.log('Matched transactions moved to TWOWAY_RECON_TXN successfully.');
-    }
-
-    private async deleteFromTables(matchedData: any[], executeWithRetry: Function, maxRetries: number, retryDelay: number): Promise<void> {
-        const deleteBatchSize = 1000;
-        for (let i = 0; i < matchedData.length; i += deleteBatchSize) {
-            const batch = matchedData.slice(i, i + deleteBatchSize);
-            const upiTxnIds = batch.map(row => `'${row.UPI_TXN_ID}'`).join(', ');
-
-            const deleteSwitchTxnQuery = `
-            ALTER TABLE SWITCH_TXN 
-            DELETE WHERE UPI_TXN_ID IN (${upiTxnIds});
-        `;
-            console.log(`deleting ${batch.length} rows of ${matchedData.length} records from SWITCH_TXN...`);
-
-            await executeWithRetry(() => this.clickdb.query({ query: deleteSwitchTxnQuery }), maxRetries, retryDelay);
-            console.log(`deleted SWITCH_TXN successfully`);
-            const deleteNpcTxnQuery = `
-            ALTER TABLE NPCI_TXN 
-            DELETE WHERE UPI_TXN_ID IN (${upiTxnIds});
-        `;
-            console.log(`deleting ${batch.length} rows of ${matchedData.length} records from NPCI_TXN...`);
-            await executeWithRetry(() => this.clickdb.query({ query: deleteNpcTxnQuery }), maxRetries, retryDelay);
-        }
-        this.logger.log('deletion activities completed successfully.');
-    }
-
-    private notifyCompletion(): void {
-        this.logger.log('Sending notification of reconciliation completion...');
-        // Add notification logic here (e.g., WebSocket, email)
     }
 }
