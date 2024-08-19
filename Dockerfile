@@ -34,15 +34,18 @@ ENV NODE_OPTIONS=--max-old-space-size=4096
 CMD ["node", "dist/main"]
 
 
-#Step 1: build the docker image using command docker build -t chandansutradhar/merchant-portal-api-v2 .
-#Step 2: push the docker image to docker hub using command docker push chandansutradhar/merchant-portal-api-v2
-#Step 3: pull the docker image from docker hub using command docker pull chandansutradhar/merchant-portal-api-v2
-#Step 4: run the docker image using command docker run -p 3000:3000 chandansutradhar/merchant-portal-api-v2
+#Step 1: build the docker image using command docker build -t chandansutradhar/merchant-portal-api-v2:1.2.3 .
+#Step 2: push the docker image to docker hub using command docker push chandansutradhar/merchant-portal-api-v2:1.2.3
+#Step 3: pull the docker image from docker hub using command docker pull chandansutradhar/merchant-portal-api-v2:1.2.3
+#Step 4: run the docker image using command: 
+
+#sudo docker run -d --name cosmos-merchant-portal-v2 --restart on-failure -p 3000:3000 -v /home/npst_dev/portal-logs:/app/logs chandansutradhar/merchant-portal-api-v2:1.2.3
+
 #Step 5: check the running container using command docker ps
 ##ONLY FOR TROUBLESHOOTING PURPOSE
-#Step 6: stop the running container using command docker stop merchant-portal-api-v2
-#Step 7: remove the stopped container using command docker rm merchant-portal-api-v2
-#Step 8: remove the docker image using command docker rmi chandansutradhar/merchant-portal-api-v2
+#Step 6: stop the running container using command docker stop merchant-portal-api-v2:1.2.3
+#Step 7: remove the stopped container using command docker rm merchant-portal-api-v2:1.2.3
+#Step 8: remove the docker image using command docker rmi chandansutradhar/merchant-portal-api-v2:1.2.3
 #To check logs - sudo docker logs <container_id>
 ##TODO: docker container should restart on app exception
 ##TODO: log should be written into a local volume

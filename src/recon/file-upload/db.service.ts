@@ -27,29 +27,36 @@ export class DBService {
         }
     }
 
-
-
     async getAllCount() {
-
-        const queries = [{ query: 'SELECT * FROM SWITCH_TXN', result: 0 },
-        { query: 'SELECT * FROM NPCI_TXN', result: 0 },
-        { query: 'SELECT * FROM INVALID_TXN', result: 0 },
-        { query: 'SELECT * FROM DUPLICATE_TXN', result: 0 },
-        { query: 'SELECT * FROM RECON_TXN', result: 0 },
-        { query: 'SELECT * FROM NON_RECON_TXN', result: 0 },
-        { query: 'SELECT * FROM FILE_UPLOAD_HISTORY', result: 0 }];
+        const queries = [
+            { query: 'SELECT COUNT(*) AS COUNT FROM SWITCH_TXN', result: 0 },
+            { query: 'SELECT COUNT(*) AS COUNT FROM NPCI_TXN', result: 0 },
+            { query: 'SELECT COUNT(*) AS COUNT FROM INVALID_TXN', result: 0 },
+            { query: 'SELECT COUNT(*) AS COUNT FROM DUPLICATE_TXN', result: 0 },
+            { query: 'SELECT COUNT(*) AS COUNT FROM RECON_TXN', result: 0 },
+            { query: 'SELECT COUNT(*) AS COUNT FROM NON_RECON_TXN', result: 0 },
+            { query: 'SELECT COUNT(*) AS COUNT FROM FILE_UPLOAD_HISTORY', result: 0 }
+        ];
 
         try {
-            queries.map(async (q, idx) => {
+            // Create an array of promises for all queries
+            const promises = queries.map(async (q, idx) => {
                 const r = await this.clickdb.query({ query: q.query });
-                q.result = (await r.json()).data.length;
-                console.log(q.query + ' :' + q.result);
+                const data = await r.json();
+                // Ensure you access the right field for the count
+                const count = parseInt(data.data[0]['COUNT'] || 0);
+                return { ...q, result: count };
             });
-            return queries;
+
+            // Wait for all promises to resolve
+            const results = await Promise.all(promises);
+            return results;
         } catch (error) {
-            return error;
+            console.error('Error fetching counts:', error);
+            return { error: error.message };
         }
     }
+
 
     async insertSwitchDataToDB(txns: any[]) {
         const batchSize = 30000;
