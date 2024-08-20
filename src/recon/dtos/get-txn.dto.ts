@@ -12,7 +12,7 @@ export class GetTXNDTO {
     @Min(10, { message: 'offset must be greater than or equal to 10' })
     offset: number;
 
-    @IsIn(['NPCI_TXN', 'SWITCH_TXN', 'RECON_TXN', 'DUPLICATE_TXN', 'INVALID_TXN'], { message: 'tableName must be one of NPCI_TXN, SWITCH_TXN, RECON_TXN, DUPLICATE_TXN, or INVALID_TXN' })
+    @IsIn(['NPCI_TXN', 'SWITCH_TXN', 'RECON_TXN', 'DUPLICATE_TXN', 'INVALID_TXN', 'NON_RECON_TXN'], { message: 'txnType must be one of NPCI_TXN, SWITCH_TXN, RECON_TXN, DUPLICATE_TXN, NON_RECON_TXN or INVALID_TXN' })
     txnType: string;
 }
 
