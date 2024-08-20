@@ -14,8 +14,20 @@ export class ReportController {
     }
 
     @Post('/getAllCount')
-    async getAllCountByDate(@Body() body: GetTXNCountDTO) {
+    async getAllCount(@Body() body: GetTXNCountDTO) {
         const { startDate, endDate } = body;
         return await this.reportSvc.getAllCount(body.startDate, body.endDate, body.txnType);
+    }
+
+    @Post('/getAllSuccessCount')
+    async getAllSuccessCount(@Body() body: GetTXNCountDTO) {
+        const { startDate, endDate } = body;
+        return await this.reportSvc.getAllSuccessCount(body.startDate, body.endDate, body.txnType);
+    }
+
+    @Post('/getAllFailureCount')
+    async getAllFailureCount(@Body() body: GetTXNCountDTO) {
+        const { startDate, endDate } = body;
+        return await this.reportSvc.getAllFailureCount(body.startDate, body.endDate, body.txnType);
     }
 }

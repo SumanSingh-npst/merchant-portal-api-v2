@@ -30,7 +30,7 @@ export class ReportService {
 
     async getAllCount(startDate: string, endDate: string, tableName: string) {
         try {
-            const query = `SELECT COUNT(*) AS COUNT, SUM (AMOUNT) AS AMOUNT FROM ${tableName} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
+            const query = `SELECT COUNT(*) AS COUNT,  SUM(IFNULL(toFloat64(AMOUNT), 0)) AS AMOUNT FROM ${tableName} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
             const res = await this.clickdb.query({ query });
             const data: any = (await res.json()).data[0]; // Extract the first (and only) object from the array
             return {
@@ -40,6 +40,37 @@ export class ReportService {
         } catch (error) {
             console.error('Error fetching transactions count and volume:', error);
             throw new Error('Error fetching transactions count and volume');
+        }
+    }
+
+    async getAllSuccessCount(startDate: string, endDate: string, tableName: string) {
+        try {
+            const query = `SELECT COUNT(*) AS COUNT,  SUM(IFNULL(toFloat64(AMOUNT), 0)) AS AMOUNT FROM ${tableName} WHERE UPICODE IN ('0', '00', 'RB') AND TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
+            const res = await this.clickdb.query({ query });
+            const data: any = (await res.json()).data[0]; // Extract the first (and only) object from the array
+            return {
+                count: parseInt(data.COUNT, 10),
+                amount: parseFloat(parseFloat(data.AMOUNT).toFixed(2))
+            };
+        } catch (error) {
+            console.error('Error fetching success transactions count and volume:', error);
+            throw new Error('Error fetching success transactions count and volume');
+        }
+    }
+
+
+    async getAllFailureCount(startDate: string, endDate: string, tableName: string) {
+        try {
+            const query = `SELECT COUNT(*) AS COUNT,  SUM(IFNULL(toFloat64(AMOUNT), 0)) AS AMOUNT FROM ${tableName} WHERE UPICODE NOT IN ('0','00','RB') AND TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
+            const res = await this.clickdb.query({ query });
+            const data: any = (await res.json()).data[0]; // Extract the first (and only) object from the array
+            return {
+                count: parseInt(data.COUNT, 10),
+                amount: parseFloat(parseFloat(data.AMOUNT).toFixed(2))
+            };
+        } catch (error) {
+            console.error('Error fetching failure transactions count and volume:', error);
+            throw new Error('Error fetching failure transactions count and volume');
         }
     }
 
