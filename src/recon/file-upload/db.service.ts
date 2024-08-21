@@ -39,7 +39,7 @@ export class DBService {
         ];
 
         try {
-            // Create an array of promises for all queries
+            // Create an array of promises for all queries4.
             const promises = queries.map(async (q, idx) => {
                 const r = await this.clickdb.query({ query: q.query });
                 const data = await r.json();
@@ -65,8 +65,7 @@ export class DBService {
 
         for (let i = 0; i < txns.length; i += batchSize) {
             const batch = txns.slice(i, i + batchSize);
-            console.log(`inside batch ${i} to ${i + batchSize}`);
-
+            
             const query = `
       INSERT INTO SWITCH_TXN (TXN_DATE,TXN_TIME, AMOUNT, UPICODE, STATUS, RRN, EXT_TXN_ID, PAYER_VPA, NOTE, PAYEE_VPA, UPI_TXN_ID, MCC, UPLOAD_ID) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
     `;
@@ -77,10 +76,8 @@ export class DBService {
 
             while (attempt < retries) {
                 try {
-                    console.log(`Inserting batch of ${batch.length} transactions...`);
                     await this.clickdb.exec({ query: `${query} ${values}` });
                     break; // exit the retry loop on success
-
                 } catch (error) {
                     attempt++;
                     console.log(error);

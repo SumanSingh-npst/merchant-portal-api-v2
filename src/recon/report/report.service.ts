@@ -3,11 +3,14 @@ import { InjectClickHouse } from '@md03/nestjs-clickhouse';
 import { HttpException, Injectable } from '@nestjs/common';
 import { Http2ServerResponse } from 'http2';
 import { Multer } from 'multer'
+import { ZipService } from './zip.service';
 @Injectable()
 export class ReportService {
 
     constructor(
-        @InjectClickHouse() private readonly clickdb: ClickHouseClient
+        @InjectClickHouse() private readonly clickdb: ClickHouseClient,
+        private readonly zipService: ZipService,
+
     ) { }
 
 
@@ -75,5 +78,23 @@ export class ReportService {
     }
 
 
+    async getAllTXNCount(startDate: string, endDate: string, txnType: string) {
+        const query = `SELECT COUNT(*) AS COUNT FROM ${txnType} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}'`;
+        const res = await this.clickdb.query({ query });
+        const data = await res.json();
+        const totalRecords = parseInt((data as any).data[0].COUNT, 10);
+        return totalRecords;
+    }
 
+    async processChunks(startDate: string, endDate: string, txnType: string, chunkSize: number, totalRecords: number) {
+        const totalChunks = Math.ceil(totalRecords / chunkSize);
+        console.log('starting chunk processing...');
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const data = await this.clickdb.query({ query: `SELECT * FROM ${txnType} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${chunkSize} OFFSET ${start}`, format: 'CSV' });
+            const buffer = Buffer.from((await data.text()).toString());
+            this.zipService.addToZip(buffer, `chunk_${i}.csv`);
+            console.log(`Processed chunk ${i + 1} of ${totalChunks}`);
+        }
+    }
 }

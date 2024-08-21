@@ -9,7 +9,7 @@ export class GetTXNDTO {
     startPosition: number;
 
     @IsNumber({}, { message: 'offset must be a number' })
-    @Min(10, { message: 'offset must be greater than or equal to 10' })
+    @Min(5, { message: 'offset must be greater than or equal to 5' })
     offset: number;
 
     @IsIn(['NPCI_TXN', 'SWITCH_TXN', 'RECON_TXN', 'DUPLICATE_TXN', 'INVALID_TXN', 'NON_RECON_TXN'], { message: 'txnType must be one of NPCI_TXN, SWITCH_TXN, RECON_TXN, DUPLICATE_TXN, NON_RECON_TXN or INVALID_TXN' })
