@@ -6,6 +6,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ClickHouseModule } from '@md03/nestjs-clickhouse';
 import { DownloadModule } from './download/download.module';
 import { CustomSettingModule } from './custom-setting/custom-setting.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [ReconModule,
@@ -29,6 +30,7 @@ import { CustomSettingModule } from './custom-setting/custom-setting.module';
     }),
     DownloadModule,
     CustomSettingModule,
+    AuthModule,
   ],
 
   controllers: [AppController],
