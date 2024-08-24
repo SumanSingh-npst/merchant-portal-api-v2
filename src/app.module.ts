@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { ReconModule } from './recon/recon.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { ClickHouseModule } from '@md03/nestjs-clickhouse';
+import { DownloadModule } from './download/download.module';
+import { CustomSettingModule } from './custom-setting/custom-setting.module';
 
 @Module({
   imports: [ReconModule,
@@ -24,8 +26,11 @@ import { ClickHouseModule } from '@md03/nestjs-clickhouse';
     }),
     MulterModule.register({
       dest: './uploads',
-    })],
-  
+    }),
+    DownloadModule,
+    CustomSettingModule,
+  ],
+
   controllers: [AppController],
   providers: [AppService],
 })
