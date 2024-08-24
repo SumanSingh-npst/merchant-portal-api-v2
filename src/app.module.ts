@@ -7,9 +7,14 @@ import { ClickHouseModule } from '@md03/nestjs-clickhouse';
 import { DownloadModule } from './download/download.module';
 import { CustomSettingModule } from './custom-setting/custom-setting.module';
 import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from './config/config.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
-  imports: [ReconModule,
+  imports: [
+    ConfigModule,
+    AuthModule,
+    ReconModule,
     ClickHouseModule.forRoot({
       clickhouse_settings: {
         tcp_keep_alive_timeout: 60000,
@@ -21,7 +26,7 @@ import { AuthModule } from './auth/auth.module';
       //host: 'http://103.209.147.51:8123',
       //username: 'clickhouse_admin',
       //password: 'j38h39skmTNnsjwT',
-      url: '  https://vzl9tbrfra.ap-south-1.aws.clickhouse.cloud:8443',
+      url: 'https://vzl9tbrfra.ap-south-1.aws.clickhouse.cloud:8443',
       username: 'default',
       password: 'CsRCIAHoU.3jJ'
     }),
@@ -31,6 +36,7 @@ import { AuthModule } from './auth/auth.module';
     DownloadModule,
     CustomSettingModule,
     AuthModule,
+    AuditModule,
   ],
 
   controllers: [AppController],
