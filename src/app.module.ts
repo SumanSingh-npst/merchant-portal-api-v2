@@ -9,10 +9,14 @@ import { CustomSettingModule } from './custom-setting/custom-setting.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from './config/config.module';
 import { AuditModule } from './audit/audit.module';
+import { JwtStrategy } from './auth/jwt.strategy';
+import { TokenValidationInterceptor } from './interceptors/token-validation.interceptor';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     ConfigModule,
+
     AuthModule,
     ReconModule,
     ClickHouseModule.forRoot({
@@ -37,9 +41,10 @@ import { AuditModule } from './audit/audit.module';
     CustomSettingModule,
     AuthModule,
     AuditModule,
+    UserModule,
   ],
 
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController,],
+  providers: [AppService, JwtStrategy, TokenValidationInterceptor],
 })
 export class AppModule { }

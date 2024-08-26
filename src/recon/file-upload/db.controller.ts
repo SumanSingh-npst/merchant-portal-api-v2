@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { DBService } from "./db.service";
 
 @Controller('db')
@@ -21,5 +21,10 @@ export class DbController {
     @Get('/selectAll/:tableName')
     async getAllByTableName(@Param('tableName') tableName: string) {
         return await this.dbSvc.selectAllByTableName(tableName);
+    }
+
+    @Get('/allTableSchema')
+    async getAllTableSchema() {
+        return await this.dbSvc.getAllTableSchema();
     }
 }

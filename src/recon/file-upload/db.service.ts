@@ -65,7 +65,7 @@ export class DBService {
 
         for (let i = 0; i < txns.length; i += batchSize) {
             const batch = txns.slice(i, i + batchSize);
-            
+
             const query = `
       INSERT INTO SWITCH_TXN (TXN_DATE,TXN_TIME, AMOUNT, UPICODE, STATUS, RRN, EXT_TXN_ID, PAYER_VPA, NOTE, PAYEE_VPA, UPI_TXN_ID, MCC, UPLOAD_ID) SETTINGS async_insert=1, wait_for_async_insert=1 VALUES
     `;
@@ -123,32 +123,6 @@ export class DBService {
             throw error;
         }
     }
-    // async insertNPCIDataToDB(txns: any[]) {
-    //     const batchSize = 30000;
-    //     const retries = 10;
-    //     console.log(`started inserting npci data of length ${txns.length} records in batch of 16K rows per batch`);
-
-    //     for (let i = 0; i < txns.length; i += batchSize) {
-    //         const batch = txns.slice(i, i + batchSize);
-    //         console.log(`inside batch ${i} to ${i + batchSize}`);
-    //         const query = `INSERT INTO NPCI_TXN (TX_TYPE, UPI_TXN_ID, UPICODE, AMOUNT, TXN_DATE, TXN_TIME, RRN, PAYER_CODE, PAYER_VPA, PAYEE_CODE, PAYEE_VPA, MCC, REM_IFSC_CODE, REM_ACC_NUMBER, BEN_IFSC_CODE, BEN_ACC_NUMBER, UPLOAD_ID) VALUES`;
-    //         const values = batch.map(item => (
-    //             `('${item.TX_TYPE}', '${item.UPI_TXN_ID}', '${item.UPICODE}', ${item.AMOUNT}, '${item.TXN_DATE}', '${item.TXN_TIME}', '${item.RRN}', '${item.PAYER_CODE}', '${item.PAYER_VPA}', '${item.PAYEE_CODE}', '${item.PAYEE_VPA}', '${item.MCC}', '${item.REM_IFSC_CODE}', '${item.REM_ACC_NUMBER}', '${item.BEN_IFSC_CODE}', '${item.BEN_ACC_NUMBER}', '${item.UPLOAD_ID}')`
-    //         )).join(', ');
-    //         let attempt = 0;
-    //         while (attempt < retries) {
-    //             try {
-    //                 console.log(`Inserting batch of ${batch.length} transactions...`);
-    //                 await this.clickdb.exec({ query: `${query} ${values}` });
-    //                 break; // exit the retry loop on success
-    //             } catch (error) {
-    //                 attempt++;
-    //                 console.log(error);
-    //                 console.error(`Error inserting data: ${error.message}`);
-    //             }
-    //         }
-    //     }
-    // }
 
     /**
  * Inserts junk data into a database table. This junk data are transactions which are missing values, contain invalid values, or are duplicated.
@@ -273,5 +247,22 @@ export class DBService {
         console.log('fetching txn id completed successfully');
         return existingTxnIds;
     }
+
+    async getAllTableSchema() {
+        const query = `SELECT table_name, 
+                    FROM INFORMATION_SCHEMA.TABLES
+                    WHERE (table_schema = currentDatabase() OR table_schema = '')
+                    AND table_name NOT LIKE '%inner%'`
+
+        try {
+            const q = await this.clickdb.query({ query });
+            const jsonResult = await q.json();
+            return jsonResult.data;
+
+        } catch (error) {
+
+        }
+    }
+
 
 }
