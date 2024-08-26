@@ -249,18 +249,39 @@ export class DBService {
     }
 
     async getAllTableSchema() {
-        const query = `SELECT table_name, 
-                    FROM INFORMATION_SCHEMA.TABLES
-                    WHERE (table_schema = currentDatabase() OR table_schema = '')
-                    AND table_name NOT LIKE '%inner%'`
+        const query = `SELECT table_name 
+                   FROM INFORMATION_SCHEMA.TABLES
+                   WHERE (table_schema = currentDatabase() OR table_schema = '')
+                   AND table_name NOT LIKE '%inner%'`;
 
         try {
             const q = await this.clickdb.query({ query });
             const jsonResult = await q.json();
-            return jsonResult.data;
+            const tableSchemasPromises = jsonResult.data.map(async (row: any) => {
+                const r = await this.clickdb.query({ query: `SHOW CREATE TABLE ${row.table_name}` });
+                const res = await r.json();
+                if (res.data.length > 0) {
+                    let schema = (res.data[0] as { statement: string }).statement;
+
+                    // Remove quotes after the number 8192
+                    schema = schema.replace(/8192"/g, '8192').trim(); // Replace 8192" with 8192
+
+                    // Remove the leading and trailing quotes from the entire statement, if present
+                    if (schema.startsWith('"') && schema.endsWith('"')) {
+                        schema = schema.slice(1, -1);
+                    }
+
+                    return schema;
+                }
+                return null; // Return null for empty results
+            });
+
+            const tableSchemas = await Promise.all(tableSchemasPromises);
+            return tableSchemas.filter(schema => schema !== null); // Filter out any null values
 
         } catch (error) {
-
+            console.error('Error fetching table schemas:', error);
+            throw error; // Re-throw the error after logging
         }
     }
 
