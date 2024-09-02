@@ -12,6 +12,7 @@ import { AuditModule } from './audit/audit.module';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { TokenValidationInterceptor } from './interceptors/token-validation.interceptor';
 import { UserModule } from './user/user.module';
+import { EncryptionService } from './common/encryption/encryption.service';
 
 @Module({
   imports: [
@@ -45,6 +46,6 @@ import { UserModule } from './user/user.module';
   ],
 
   controllers: [AppController,],
-  providers: [AppService, JwtStrategy, TokenValidationInterceptor],
+  providers: [AppService, JwtStrategy, TokenValidationInterceptor, EncryptionService],
 })
 export class AppModule { }

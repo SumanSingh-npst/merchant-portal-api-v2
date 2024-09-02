@@ -1,19 +1,34 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { AxiosError } from 'axios';
 import * as bcrypt from 'bcrypt';
-import { last } from 'rxjs';
+import { error } from 'console';
+import { catchError, firstValueFrom, last } from 'rxjs';
+import { AuditService } from 'src/audit/audit.service';
+import { EncryptionService } from 'src/common/encryption/encryption.service';
 import { User } from 'src/user/dtos/user.dto';
 import { UserService } from 'src/user/user.service';
+import { threadId } from 'worker_threads';
 
 @Injectable()
 export class AuthService {
+
     constructor(
         private readonly usersService: UserService,
         private readonly jwtService: JwtService,
-        private configSvc: ConfigService
+        private configSvc: ConfigService,
+        private http: HttpService,
+        private logger: Logger,
+        private auditSvc: AuditService,
+        private encSvc: EncryptionService
     ) { }
 
+
+    async emailExists(email: string) {
+        return await this.usersService.findOneByEmail(email);
+    }
     async validateUser(email: string, pass: string): Promise<Omit<User, 'password'>> {
         console.log('in validate user', email, pass);
         const user = await this.usersService.findOneByEmail(email);
@@ -25,11 +40,14 @@ export class AuthService {
         return null;
     }
 
+    logout(user: any) {
+        return true;
+    }
+
     async login(user: Omit<User, 'password'>) {
         const payload = {
             userId: user.userId,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            fullName: user.fullName,
             email: user.email,
             mobile: user.mobile,
             roles: user.roles,
@@ -42,7 +60,9 @@ export class AuthService {
         };
         return {
             access_token: this.jwtService.sign(payload, {
+                expiresIn: '60m',
                 secret: this.configSvc.get('JWT_SECRET'),
+
             }),
         };
     }

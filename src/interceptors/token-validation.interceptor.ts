@@ -17,7 +17,7 @@ export class TokenValidationInterceptor implements NestInterceptor {
         const url = request.url;
 
         // Allow requests to registration and login endpoints without a token
-        if (url.startsWith('/auth/register') || url.startsWith('/auth/login')) {
+        if (url.startsWith('/auth') || url.startsWith('/audit')) {
             return next.handle();
         }
 
@@ -32,8 +32,11 @@ export class TokenValidationInterceptor implements NestInterceptor {
         try {
             // Verify the token using JwtService
             const decodedToken = this.jwtService.verify(token);
+
             // Attach the decoded token to the request object
             request.user = decodedToken;
+            console.log('Decoded token:', decodedToken);
+
         } catch (error) {
             throw new UnauthorizedException('Invalid or expired token');
         }

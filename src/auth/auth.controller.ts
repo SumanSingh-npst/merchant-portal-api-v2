@@ -1,12 +1,10 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { User } from 'src/user/dtos/user.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-
-
     constructor(private authSvc: AuthService) {
 
     }
@@ -22,5 +20,15 @@ export class AuthController {
     async register(@Body() user: User) {
         console.log(user);
         return await this.authSvc.register(user);
+    }
+
+    @Post('/logout')
+    async logout(@Request() req) {
+        return await this.authSvc.logout(req.user);
+    }
+
+    @Get('/emailExists/:email')
+    async emailExists(@Param('email') email: string) {
+        return await this.authSvc.emailExists(email);
     }
 }
