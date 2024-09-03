@@ -17,7 +17,7 @@ export class OtpService {
     private encSvc: EncryptionService,
   ) {}
 
-  async saveOTP(
+  private async saveOTP(
     userId: string,
     otp: string,
     otpType: string,
@@ -29,11 +29,11 @@ export class OtpService {
       await this.clickdb.exec({ query: insert });
       return true;
     } catch (error) {
-      throw error;
+      throw new Error(error);
     }
   }
 
-  async sendOTP(
+  public async sendOTP(
     email: string,
     fullName: string,
     userId: string,
