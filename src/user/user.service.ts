@@ -119,7 +119,6 @@ export class UserService {
         } catch (error) {
             throw error;
         }
-
     }
 
     async sendOTP(email: string, fullName: string, userId: string, otpType: string) {
