@@ -13,10 +13,7 @@ export class OtpController {
   @Post('sendOTP')
   async sendEmailOTP(@Body() body: SendOTPDto) {
     return await this.otp.sendOTP(
-      body.email,
-      body.fullName,
-      body.userId,
-      body.otpType,
+     body
     );
   }
 
