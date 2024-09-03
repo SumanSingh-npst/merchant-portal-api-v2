@@ -1,5 +1,5 @@
 # Stage 1: Build the NestJS application
-FROM node:20-alpine AS build
+FROM node:latest AS sass
 
 # Set the working directory inside the container
 WORKDIR /app
