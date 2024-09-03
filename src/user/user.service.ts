@@ -14,7 +14,6 @@ export class UserService {
     }
 
     const lastUser = await this.lastUser();
-    console.log(lastUser);
     const user_id = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
     user.blocked = false;
     user.failedAttempt = 0;
