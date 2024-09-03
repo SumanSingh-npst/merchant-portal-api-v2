@@ -8,9 +8,7 @@ export class UserService {
   constructor(@InjectClickHouse() private readonly clickdb: ClickHouseClient) {}
 
   async create(user: User) {
-    //check if the user doesn't exists
     const userExists = await this.findOneByEmail(user.email);
-    console.log(userExists);
     if (userExists) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
