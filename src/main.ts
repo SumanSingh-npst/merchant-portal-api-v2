@@ -12,8 +12,8 @@ async function bootstrap() {
     logger: new CustomLogger(),
   });
   const jwtService = app.get(JwtService);
-
-  app.useGlobalInterceptors(new TokenValidationInterceptor(jwtService));
+  //removed for dev
+  // app.useGlobalInterceptors(new TokenValidationInterceptor(jwtService));
   app.use('/downloads', express.static(path.join(__dirname, 'downloads')));
   app.enableCors({ origin: '*' });
   app.useGlobalPipes(new ValidationPipe());

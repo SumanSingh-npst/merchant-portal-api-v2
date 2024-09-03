@@ -13,6 +13,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
 import { TokenValidationInterceptor } from './interceptors/token-validation.interceptor';
 import { UserModule } from './user/user.module';
 import { EncryptionService } from './common/encryption/encryption.service';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { EncryptionService } from './common/encryption/encryption.service';
     AuthModule,
     AuditModule,
     UserModule,
+    OtpModule,
   ],
 
   controllers: [AppController,],
