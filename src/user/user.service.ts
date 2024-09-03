@@ -93,7 +93,7 @@ export class UserService {
 
   async lastUser() {
     try {
-      const query = `SELECT FULL_NAME, CREATED_ON
+      const query = `SELECT FULL_NAME, CREATED_ON, USER_ID
                     FROM "USER"
                     ORDER BY CREATED_ON DESC
                     LIMIT 1`;
@@ -102,7 +102,22 @@ export class UserService {
       return {
         name: data.data[0].FULL_NAME,
         createdOn: data.data[0].CREATED_ON,
+        userId: data.data[0].USER_ID,
       };
+    } catch (error) {
+      return { res: error, status: false, msg: 'error', statusCode: 500 };
+    }
+  }
+
+  async createUser(user: any) {
+    try {
+      const userExists = await this.findOneByEmail(user.email);
+      if (userExists) {
+        throw new HttpException('User already exists', HttpStatus.CONFLICT);
+      }
+      const lastUser = await this.lastUser();
+      console.log(lastUser);
+      // const user_id = lastUser.createdOn + 1;
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }

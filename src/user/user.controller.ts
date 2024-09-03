@@ -39,6 +39,11 @@ export class UserController {
   async isOTPVerified(@Body() body: { userId: string; otpType: string }) {
     return await this.otp.isOTPVerified(body.userId, body.otpType);
   }
+
+  @Post('/test')
+  async test(@Body() user: any) {
+    return await this.userService.createUser(user);
+  }
 }
 //1. //find by email
 //2. //create user => create user taking userId, email , password, failedAttempt

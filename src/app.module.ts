@@ -26,14 +26,13 @@ import { EncryptionService } from './common/encryption/encryption.service';
         http_connection_timeout: 60000,
         wait_end_of_query: 1,
         http_headers_progress_interval_ms: '1000',
-
       },
       //host: 'http://103.209.147.51:8123',
       //username: 'clickhouse_admin',
       //password: 'j38h39skmTNnsjwT',
       url: 'https://vzl9tbrfra.ap-south-1.aws.clickhouse.cloud:8443',
       username: 'default',
-      password: 'CsRCIAHoU.3jJ'
+      password: 'CsRCIAHoU.3jJ',
     }),
     MulterModule.register({
       dest: './uploads',
@@ -45,7 +44,12 @@ import { EncryptionService } from './common/encryption/encryption.service';
     UserModule,
   ],
 
-  controllers: [AppController,],
-  providers: [AppService, JwtStrategy, TokenValidationInterceptor, EncryptionService],
+  controllers: [AppController],
+  providers: [
+    AppService,
+    JwtStrategy,
+    TokenValidationInterceptor,
+    EncryptionService,
+  ],
 })
-export class AppModule { }
+export class AppModule {}
