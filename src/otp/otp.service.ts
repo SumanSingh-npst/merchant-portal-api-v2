@@ -88,8 +88,14 @@ export class OtpService {
   async verifyOTP(body: VerifyOTPDto) {
     console.log(body);
     const { userId, otp, otpType } = body;
-    const query = `SELECT OTP_VALUE FROM OTP_VERIFICATION WHERE USER_ID = '${userId}' AND OTP_TYPE = '${otpType}';`;
-    try {
+    const query = `
+    SELECT OTP_VALUE 
+    FROM OTP_VERIFICATION 
+    WHERE USER_ID = '${userId}' 
+      AND OTP_TYPE = '${otpType}' 
+    ORDER BY CREATED_ON DESC 
+    LIMIT 1;
+  `;    try {
       const r = await this.clickdb.query({ query: query });
       const jsonRes: any = await r.json();
       if (jsonRes.data.length === 0) {
@@ -103,18 +109,21 @@ export class OtpService {
 
         if (decryptedOTP === otp) {
           const date = new Date();
-          const formattedDate = date.toISOString().slice(0, 19).replace('T', ' '); // Strip milliseconds and format
-        
+          const formattedDate = date
+            .toISOString()
+            .slice(0, 19)
+            .replace('T', ' '); // Strip milliseconds and format
+
           await this.clickdb.exec({
             query: `ALTER TABLE OTP_VERIFICATION UPDATE VERIFIED = true, VERIFIED_ON = '${formattedDate}' 
                     WHERE USER_ID = '${userId}' AND OTP_TYPE = '${otpType}';`,
           });
-          
+
           return true;
-        }else {
+        } else {
           throw new HttpException(
-            'FAILED TO UPDATE VERIFICATION STATUS',
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            'OTP does not match. Verification failed.',
+            HttpStatus.UNAUTHORIZED,
           );
         }
       }

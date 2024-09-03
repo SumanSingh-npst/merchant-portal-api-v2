@@ -14,13 +14,8 @@ export class UserService {
     }
 
     const lastUser = await this.lastUser();
-<<<<<<< HEAD
-    console.log(lastUser)
-    const user_id = parseInt(lastUser.userId.replace('u', '')) + 1;
-=======
     const user_id = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
 
->>>>>>> refs/remotes/origin/onboarding
     user.blocked = false;
     user.failedAttempt = 0;
     user.createdOn = new Date().toISOString();
