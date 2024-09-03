@@ -14,6 +14,7 @@ export class UserService {
     }
 
     const lastUser = await this.lastUser();
+    console.log(lastUser)
     const user_id = parseInt(lastUser.userId.replace('u', '')) + 1;
     user.blocked = false;
     user.failedAttempt = 0;
@@ -99,6 +100,7 @@ export class UserService {
                     LIMIT 1`;
       const response = await this.clickdb.query({ query: query });
       const data: any = await response.json();
+      
       return {
         name: data.data[0].FULL_NAME,
         createdOn: data.data[0].CREATED_ON,

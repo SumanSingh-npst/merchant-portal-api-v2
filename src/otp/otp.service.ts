@@ -9,6 +9,7 @@ import { EncryptionService } from 'src/common/encryption/encryption.service';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
+import { VerifyOTPDto } from './dto/verify-otp.dto';
 
 @Injectable()
 export class OtpService {
@@ -37,7 +38,6 @@ export class OtpService {
   }
 
   public async sendOTP(body: SendOTPDto) {
- 
     console.log(body);
     const otp = Math.floor(100000 + Math.random() * 900000);
 
@@ -85,7 +85,9 @@ export class OtpService {
     return data;
   }
 
-  async verifyOTP(userId: string, otp: string, otpType: string) {
+  async verifyOTP(body: VerifyOTPDto) {
+    console.log(body);
+    const { userId, otp, otpType } = body;
     const query = `SELECT OTP_VALUE FROM OTP_VERIFICATION WHERE USER_ID = '${userId}' AND OTP_TYPE = '${otpType}';`;
     try {
       const r = await this.clickdb.query({ query: query });
@@ -98,13 +100,18 @@ export class OtpService {
           jsonRes.data[0].OTP_VALUE,
         );
         console.log('otp compare=>', decryptedOTP, otp);
+
         if (decryptedOTP === otp) {
+          const date = new Date();
+          const formattedDate = date.toISOString().slice(0, 19).replace('T', ' '); // Strip milliseconds and format
+        
           await this.clickdb.exec({
-            query: `ALTER TABLE OTP_VERIFICATION UPDATE VERIFIED = true, VERIFIED_ON = '${new Date().toUTCString()}' 
+            query: `ALTER TABLE OTP_VERIFICATION UPDATE VERIFIED = true, VERIFIED_ON = '${formattedDate}' 
                     WHERE USER_ID = '${userId}' AND OTP_TYPE = '${otpType}';`,
           });
+          
           return true;
-        } else {
+        }else {
           throw new HttpException(
             'FAILED TO UPDATE VERIFICATION STATUS',
             HttpStatus.INTERNAL_SERVER_ERROR,

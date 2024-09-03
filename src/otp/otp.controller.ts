@@ -3,6 +3,7 @@ import { OtpService } from './otp.service';
 import { CreateOtpDto } from './dto/create-otp.dto';
 import { UpdateOtpDto } from './dto/update-otp.dto';
 import { SendOTPDto } from './dto/send-otp.dto';
+import { VerifyOTPDto } from './dto/verify-otp.dto';
 
 @Controller('otp')
 export class OtpController {
@@ -19,9 +20,9 @@ export class OtpController {
 
   @Post('verifyOTP')
   async verifyOTP(
-    @Body() body: { userId: string; otp: string; otpType: string },
+    @Body() body:VerifyOTPDto
   ) {
-    return await this.otp.verifyOTP(body.userId, body.otp, body.otpType);
+    return await this.otp.verifyOTP(body);
   }
 
   @Post('otpVerified')
