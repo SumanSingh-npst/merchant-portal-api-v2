@@ -14,7 +14,7 @@ export class UserService {
     }
 
     const lastUser = await this.lastUser();
-    const user_id = lastUser.createdOn + 1;
+    const user_id = parseInt(lastUser.userId.replace('u', '')) + 1;
     user.blocked = false;
     user.failedAttempt = 0;
     user.createdOn = new Date().toISOString();
@@ -104,20 +104,6 @@ export class UserService {
         createdOn: data.data[0].CREATED_ON,
         userId: data.data[0].USER_ID,
       };
-    } catch (error) {
-      return { res: error, status: false, msg: 'error', statusCode: 500 };
-    }
-  }
-
-  async createUser(user: any) {
-    try {
-      const userExists = await this.findOneByEmail(user.email);
-      if (userExists) {
-        throw new HttpException('User already exists', HttpStatus.CONFLICT);
-      }
-      const lastUser = await this.lastUser();
-      console.log(lastUser);
-      // const user_id = lastUser.createdOn + 1;
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
