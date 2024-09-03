@@ -6,6 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
 import { EncryptionService } from 'src/common/encryption/encryption.service';
+import { SendOTPDto } from './dto/send-otp.dto';
+import { plainToClass } from 'class-transformer';
+import { validate } from 'class-validator';
 
 @Injectable()
 export class OtpService {
@@ -33,12 +36,9 @@ export class OtpService {
     }
   }
 
-  public async sendOTP(
-    email: string,
-    fullName: string,
-    userId: string,
-    otpType: string,
-  ) {
+  public async sendOTP(body: SendOTPDto) {
+ 
+    console.log(body);
     const otp = Math.floor(100000 + Math.random() * 900000);
 
     const payload = {
@@ -49,8 +49,8 @@ export class OtpService {
       to: [
         {
           email_address: {
-            address: email,
-            name: fullName,
+            address: body.email,
+            name: body.fullName,
           },
         },
       ],
@@ -78,7 +78,7 @@ export class OtpService {
 
     if (data.data && data.data[0].code == 'EM_104') {
       const encOTP = await this.encSvc.encrypt(otp.toString());
-      await this.saveOTP(userId, encOTP, otpType, data.request_id);
+      await this.saveOTP(body.userId, encOTP, body.otpType, data.request_id);
     } else {
       throw 'An error encountered while sending otp!';
     }
