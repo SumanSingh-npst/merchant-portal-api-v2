@@ -7,8 +7,6 @@ import { AxiosError } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
 import { EncryptionService } from 'src/common/encryption/encryption.service';
 import { SendOTPDto } from './dto/send-otp.dto';
-import { plainToClass } from 'class-transformer';
-import { validate } from 'class-validator';
 
 @Injectable()
 export class OtpService {
@@ -37,7 +35,6 @@ export class OtpService {
   }
 
   public async sendOTP(body: SendOTPDto) {
- 
     console.log(body);
     const otp = Math.floor(100000 + Math.random() * 900000);
 
