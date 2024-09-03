@@ -40,12 +40,12 @@ export class UserController {
     return await this.otp.isOTPVerified(body.userId, body.otpType);
   }
 }
- //1. //find by email
+//1. //find by email
 //2. //create user => create user taking userId, email , password, failedAttempt
-  // createdOn
-  // disabled
-  // passwordResetDate
-  // lastLoggedIn
+// createdOn
+// disabled
+// passwordResetDate
+// lastLoggedIn
 //3. sendotp: insert new row in OTP_VERIFICATION table TAKING all defualt values mentioned in otpSvc
 //4. verifyOTP: update OTP_VERIFICATION table with verified otp provided by user
 //5. updateUser: update USER with new provided mobileno
@@ -54,4 +54,3 @@ export class UserController {
 
 //...
 //8. PAN VER
-
