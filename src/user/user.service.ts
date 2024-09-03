@@ -15,7 +15,7 @@ export class UserService {
 
     const lastUser = await this.lastUser();
     const user_id = lastUser.createdOn + 1;
-
+    user.blocked = false;
     user.failedAttempt = 0;
     user.createdOn = new Date().toISOString();
     user.disabled = false;
