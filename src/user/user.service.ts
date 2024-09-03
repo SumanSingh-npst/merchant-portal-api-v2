@@ -15,6 +15,7 @@ export class UserService {
 
     const lastUser = await this.lastUser();
     const user_id = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
+
     user.blocked = false;
     user.failedAttempt = 0;
     user.createdOn = new Date().toISOString();
@@ -32,8 +33,11 @@ export class UserService {
       .join(',');
     const finalRolesQuery = `${rolesQuery} ${values};`;
     try {
-      await this.clickdb.exec({ query: query });
-      await this.clickdb.exec({ query: finalRolesQuery });
+      await Promise.all([
+        this.clickdb.exec({ query: query }),
+        this.clickdb.exec({ query: finalRolesQuery }),
+      ]);
+
       return user;
     } catch (error) {
       throw error;
@@ -99,8 +103,6 @@ export class UserService {
                     LIMIT 1`;
       const response = await this.clickdb.query({ query: query });
       const data: any = await response.json();
-      console.log(data.data.length);
-
       return data.data.length > 0
         ? {
             name: data.data[0].FULL_NAME,
