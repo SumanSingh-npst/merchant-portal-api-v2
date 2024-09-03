@@ -24,10 +24,6 @@ export class TokenValidationInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    if (url.includes('/user/test')) {
-      return next.handle();
-    }
-
     // Check for the presence of a token
     const authHeader = request.headers.authorization;
     const token = authHeader?.split(' ')[1];

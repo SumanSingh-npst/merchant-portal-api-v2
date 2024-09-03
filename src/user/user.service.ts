@@ -14,8 +14,13 @@ export class UserService {
     }
 
     const lastUser = await this.lastUser();
+<<<<<<< HEAD
     console.log(lastUser)
     const user_id = parseInt(lastUser.userId.replace('u', '')) + 1;
+=======
+    const user_id = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
+
+>>>>>>> refs/remotes/origin/onboarding
     user.blocked = false;
     user.failedAttempt = 0;
     user.createdOn = new Date().toISOString();
@@ -33,8 +38,11 @@ export class UserService {
       .join(',');
     const finalRolesQuery = `${rolesQuery} ${values};`;
     try {
-      await this.clickdb.exec({ query: query });
-      await this.clickdb.exec({ query: finalRolesQuery });
+      await Promise.all([
+        this.clickdb.exec({ query: query }),
+        this.clickdb.exec({ query: finalRolesQuery }),
+      ]);
+
       return user;
     } catch (error) {
       throw error;
@@ -100,12 +108,15 @@ export class UserService {
                     LIMIT 1`;
       const response = await this.clickdb.query({ query: query });
       const data: any = await response.json();
-      
-      return {
-        name: data.data[0].FULL_NAME,
-        createdOn: data.data[0].CREATED_ON,
-        userId: data.data[0].USER_ID,
-      };
+      return data.data.length > 0
+        ? {
+            name: data.data[0].FULL_NAME,
+            createdOn: data.data[0].CREATED_ON,
+            userId: data.data[0].USER_ID,
+          }
+        : {
+            userId: 'u0',
+          };
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
