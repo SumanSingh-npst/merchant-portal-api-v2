@@ -40,7 +40,6 @@ export class OtpService {
     otpType: string,
   ) {
     const otp = Math.floor(100000 + Math.random() * 900000);
-    //save the otp against the user first
 
     const payload = {
       from: {
