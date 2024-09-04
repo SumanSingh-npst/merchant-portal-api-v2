@@ -1,15 +1,16 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { OTPTYPE } from './send-otp.dto';  // Assuming you have an enum defined for OTP types
 
-export class SendSMSDto {
+export class SendOtpRequestDto {
   @IsString()
   @IsNotEmpty()
-  senderid: string;
+  userId: string;
+
+  @IsEnum(OTPTYPE, { message: 'otpType must be either EMAIL or SMS' })
+  @IsNotEmpty()
+  otpType: OTPTYPE;
 
   @IsString()
   @IsNotEmpty()
-  message: string;
-
-  @IsString()
-  @IsNotEmpty()
-  numbers: string;
+  mobileNo: string;
 }

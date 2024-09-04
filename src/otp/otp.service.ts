@@ -12,7 +12,7 @@ import { validate } from 'class-validator';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
 import { Job } from 'bull';
 import { AppUrl } from 'appUrl';
-import { SendSMSDto } from './dto/send-sms.dto';
+import { SendOtpRequestDto } from './dto/send-sms.dto';
 
 @Injectable()
 export class OtpService {
@@ -148,23 +148,39 @@ export class OtpService {
     }
   }
 
-  async sendSms(data: SendSMSDto) {
-    console.log(data);
+  async sendSms(body: SendOtpRequestDto) {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    let message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
+    const senderid = 'TMEPAY';
+    const mobileNo = body.mobileNo;
 
-    this.logger.debug(data);
-    console.log(data);
     try {
-      let senderID = `&senderid=${data.senderid}`;
-      let msg = `&message=${data.message}`;
-      let numbers = `&dest_mobileno=${data.numbers}`;
+      let senderID = `&senderid=${senderid}`;
+      let msg = `&message=${message}`;
+      let numbers = `&dest_mobileno=${mobileNo}`;
       let response = await lastValueFrom(
         this.httpService
           .get(`${AppUrl.smsBaseUrl}${senderID}${msg}${numbers}&response=Y`)
           .pipe(map((resp) => resp.data)),
       );
-      this.logger.debug(`sendSms completed :=> ${JSON.stringify(response)}`);
+      console.log('SMS Service Response:', response);
+
+      if (response) {
+        const encOTP = await this.encSvc.encrypt(otp.toString());
+
+        await this.saveOTP(body.userId, encOTP, body.otpType, '00');
+      }
+      return {
+        status: true,
+        message: 'OTP sent Successfully.',
+        data: response,
+      };
     } catch (error) {
       this.logger.error(`sendSms Error :=> ${error}`);
+      return {
+        status: false,
+        message: 'Something went wrong.',
+      };
     }
   }
 }
