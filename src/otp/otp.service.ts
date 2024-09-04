@@ -43,8 +43,8 @@ export class OtpService {
 
     const payload = {
       from: {
-        address: 'info@timepayonline.com',
-        name: 'evok timepay',
+        address: 'noreply@timepayonline.com',
+        name: 'Evok Timepay',
       },
       to: [
         {
