@@ -2,14 +2,27 @@ import { ClickHouseClient } from '@clickhouse/client';
 import { InjectClickHouse } from '@md03/nestjs-clickhouse';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from './dtos/user.dto';
+import { OtpService } from 'src/otp/otp.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectClickHouse() private readonly clickdb: ClickHouseClient) {}
+  constructor(
+    @InjectClickHouse() private readonly clickdb: ClickHouseClient,
+    private otpSvc: OtpService,
+  ) {}
 
   async create(user: User) {
     const userExists = await this.findOneByEmail(user.email);
+    console.log(userExists);
+    let isEmailVerified: boolean = false;
     if (userExists) {
+      isEmailVerified = await this.otpSvc.isOTPVerified(
+        userExists.userId,
+        'EMAIL',
+      );
+      console.log(isEmailVerified);
+    }
+    if (userExists && isEmailVerified) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
 

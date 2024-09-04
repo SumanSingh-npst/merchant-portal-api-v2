@@ -12,6 +12,7 @@ import { HttpModule } from '@nestjs/axios';
 import { AuditModule } from 'src/audit/audit.module';
 import { AuditService } from 'src/audit/audit.service';
 import { EncryptionService } from 'src/common/encryption/encryption.service';
+import { OtpService } from 'src/otp/otp.service';
 
 @Module({
   imports: [UserModule,
@@ -26,7 +27,7 @@ import { EncryptionService } from 'src/common/encryption/encryption.service';
       }),
       inject: [ConfigService],
     })],
-  providers: [AuthService, LocalStrategy, UserService, JwtService, Logger, AuditService, EncryptionService],
+  providers: [AuthService, LocalStrategy, UserService, JwtService, Logger, AuditService, EncryptionService, OtpService],
   controllers: [AuthController],
   exports: [AuthService, JwtService],
 })

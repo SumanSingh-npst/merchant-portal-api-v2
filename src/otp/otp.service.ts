@@ -4,12 +4,15 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
-import { firstValueFrom, catchError } from 'rxjs';
+import { firstValueFrom, catchError, lastValueFrom, map } from 'rxjs';
 import { EncryptionService } from 'src/common/encryption/encryption.service';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
+import { Job } from 'bull';
+import { AppUrl } from 'appUrl';
+import { SendSMSDto } from './dto/send-sms.dto';
 
 @Injectable()
 export class OtpService {
@@ -19,7 +22,8 @@ export class OtpService {
     private http: HttpService,
     private logger: Logger,
     private encSvc: EncryptionService,
-  ) { }
+    private httpService: HttpService,
+  ) {}
 
   private async saveOTP(
     userId: string,
@@ -45,8 +49,8 @@ export class OtpService {
 
     const payload = {
       from: {
-        address: 'info@timepayonline.com',
-        name: 'evok timepay',
+        address: 'noreply@timepayonline.com',
+        name: 'Evok Timepay',
       },
       to: [
         {
@@ -97,7 +101,8 @@ export class OtpService {
       AND OTP_TYPE = '${otpType}' 
     ORDER BY CREATED_ON DESC 
     LIMIT 1;
-  `; try {
+  `;
+    try {
       const r = await this.clickdb.query({ query: query });
       const jsonRes: any = await r.json();
       if (jsonRes.data.length === 0) {
@@ -142,6 +147,42 @@ export class OtpService {
       return jsonRes.data.length > 0 ? true : false;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async sendSms(body: SendSMSDto) {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    let message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
+    const senderid = 'TMEPAY';
+    const mobileNo = body.mobileNo;
+
+    try {
+      let senderID = `&senderid=${senderid}`;
+      let msg = `&message=${message}`;
+      let numbers = `&dest_mobileno=${mobileNo}`;
+      let response = await lastValueFrom(
+        this.httpService
+          .get(`${AppUrl.smsBaseUrl}${senderID}${msg}${numbers}&response=Y`)
+          .pipe(map((resp) => resp.data)),
+      );
+      console.log('SMS Service Response:', response);
+
+      if (response) {
+        const encOTP = await this.encSvc.encrypt(otp.toString());
+
+        await this.saveOTP(body.userId, encOTP, body.otpType, '00');
+      }
+      return {
+        status: true,
+        message: 'OTP sent Successfully.',
+        data: response,
+      };
+    } catch (error) {
+      this.logger.error(`sendSms Error :=> ${error}`);
+      return {
+        status: false,
+        message: 'Something went wrong.',
+      };
     }
   }
 }

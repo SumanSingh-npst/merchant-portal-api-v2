@@ -1,27 +1,35 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { OtpService } from './otp.service';
 import { CreateOtpDto } from './dto/create-otp.dto';
 import { UpdateOtpDto } from './dto/update-otp.dto';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
+import { SendSMSDto } from './dto/send-sms.dto';
 
 @Controller('otp')
 export class OtpController {
-  constructor(private readonly otp: OtpService  ) {}
-
-
+  constructor(private readonly otp: OtpService) {}
 
   @Post('sendOTP')
   async sendEmailOTP(@Body() body: SendOTPDto) {
-    return await this.otp.sendOTP(
-     body
-    );
+    return await this.otp.sendOTP(body);
+  }
+
+  @Post('sendSMS')
+  async sendSMSOTP(@Body() body: SendSMSDto) {
+    return await this.otp.sendSms(body);
   }
 
   @Post('verifyOTP')
-  async verifyOTP(
-    @Body() body:VerifyOTPDto
-  ) {
+  async verifyOTP(@Body() body: VerifyOTPDto) {
     return await this.otp.verifyOTP(body);
   }
 
