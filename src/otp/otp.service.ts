@@ -12,7 +12,7 @@ import { validate } from 'class-validator';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
 import { Job } from 'bull';
 import { AppUrl } from 'appUrl';
-import { SendOtpRequestDto } from './dto/send-sms.dto';
+import { SendSMSDto } from './dto/send-sms.dto';
 
 @Injectable()
 export class OtpService {
@@ -148,7 +148,7 @@ export class OtpService {
     }
   }
 
-  async sendSms(body: SendOtpRequestDto) {
+  async sendSms(body: SendSMSDto) {
     const otp = Math.floor(100000 + Math.random() * 900000);
     let message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
     const senderid = 'TMEPAY';

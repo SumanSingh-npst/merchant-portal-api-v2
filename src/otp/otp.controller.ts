@@ -12,7 +12,7 @@ import { CreateOtpDto } from './dto/create-otp.dto';
 import { UpdateOtpDto } from './dto/update-otp.dto';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
-import { SendOtpRequestDto } from './dto/send-sms.dto';
+import { SendSMSDto } from './dto/send-sms.dto';
 
 @Controller('otp')
 export class OtpController {
@@ -24,7 +24,7 @@ export class OtpController {
   }
 
   @Post('sendSMS')
-  async sendSMSOTP(@Body() body: SendOtpRequestDto) {
+  async sendSMSOTP(@Body() body: SendSMSDto) {
     return await this.otp.sendSms(body);
   }
 
