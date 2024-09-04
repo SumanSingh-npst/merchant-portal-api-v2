@@ -19,7 +19,7 @@ export class OtpService {
     private http: HttpService,
     private logger: Logger,
     private encSvc: EncryptionService,
-  ) {}
+  ) { }
 
   private async saveOTP(
     userId: string,
@@ -40,6 +40,8 @@ export class OtpService {
   public async sendOTP(body: SendOTPDto) {
     console.log(body);
     const otp = Math.floor(100000 + Math.random() * 900000);
+    console.log('OTP IS =>', otp);
+
 
     const payload = {
       from: {
@@ -95,7 +97,7 @@ export class OtpService {
       AND OTP_TYPE = '${otpType}' 
     ORDER BY CREATED_ON DESC 
     LIMIT 1;
-  `;    try {
+  `; try {
       const r = await this.clickdb.query({ query: query });
       const jsonRes: any = await r.json();
       if (jsonRes.data.length === 0) {
