@@ -4,12 +4,15 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
-import { firstValueFrom, catchError } from 'rxjs';
+import { firstValueFrom, catchError, lastValueFrom, map } from 'rxjs';
 import { EncryptionService } from 'src/common/encryption/encryption.service';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
+import { Job } from 'bull';
+import { AppUrl } from 'appUrl';
+import { SendSMSDto } from './dto/send-sms.dto';
 
 @Injectable()
 export class OtpService {
@@ -19,6 +22,7 @@ export class OtpService {
     private http: HttpService,
     private logger: Logger,
     private encSvc: EncryptionService,
+    private httpService: HttpService,
   ) {}
 
   private async saveOTP(
@@ -95,7 +99,8 @@ export class OtpService {
       AND OTP_TYPE = '${otpType}' 
     ORDER BY CREATED_ON DESC 
     LIMIT 1;
-  `;    try {
+  `;
+    try {
       const r = await this.clickdb.query({ query: query });
       const jsonRes: any = await r.json();
       if (jsonRes.data.length === 0) {
@@ -140,6 +145,26 @@ export class OtpService {
       return jsonRes.data.length > 0 ? true : false;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async sendSms(data: SendSMSDto) {
+    console.log(data);
+
+    this.logger.debug(data);
+    console.log(data);
+    try {
+      let senderID = `&senderid=${data.senderid}`;
+      let msg = `&message=${data.message}`;
+      let numbers = `&dest_mobileno=${data.numbers}`;
+      let response = await lastValueFrom(
+        this.httpService
+          .get(`${AppUrl.smsBaseUrl}${senderID}${msg}${numbers}&response=Y`)
+          .pipe(map((resp) => resp.data)),
+      );
+      this.logger.debug(`sendSms completed :=> ${JSON.stringify(response)}`);
+    } catch (error) {
+      this.logger.error(`sendSms Error :=> ${error}`);
     }
   }
 }
