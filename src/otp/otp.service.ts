@@ -39,9 +39,7 @@ export class OtpService {
   }
 
   public async sendOTP(body: SendOTPDto) {
-    console.log(body);
     const otp = Math.floor(100000 + Math.random() * 900000);
-    console.log('OTP IS =>', otp);
 
     const payload = {
       from: {
@@ -88,7 +86,6 @@ export class OtpService {
   }
 
   async verifyOTP(body: VerifyOTPDto) {
-    console.log(body);
     const { userId, otp, otpType } = body;
     const query = `
     SELECT OTP_VALUE 
@@ -108,14 +105,13 @@ export class OtpService {
         const decryptedOTP = await this.encSvc.decrypt(
           jsonRes.data[0].OTP_VALUE,
         );
-        console.log('otp compare=>', decryptedOTP, otp);
 
         if (decryptedOTP === otp) {
           const date = new Date();
           const formattedDate = date
             .toISOString()
             .slice(0, 19)
-            .replace('T', ' '); // Strip milliseconds and format
+            .replace('T', ' ');
 
           await this.clickdb.exec({
             query: `ALTER TABLE OTP_VERIFICATION UPDATE VERIFIED = true, VERIFIED_ON = '${formattedDate}' 
@@ -147,13 +143,16 @@ export class OtpService {
   }
 
   async sendSms(body: SendSMSDto) {
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    const [otp, senderId, mobileNo]: [number, string, string] = [
+      Math.floor(100000 + Math.random() * 900000),
+      'TMEPAY',
+      body.mobileNo,
+    ];
+
     const message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
-    const senderid = 'TMEPAY';
-    const mobileNo = body.mobileNo;
 
     try {
-      const senderID = `&senderid=${senderid}`;
+      const senderID = `&senderid=${senderId}`;
       const msg = `&message=${message}`;
       const numbers = `&dest_mobileno=${mobileNo}`;
       const response = await lastValueFrom(
@@ -161,7 +160,6 @@ export class OtpService {
           .get(`${AppUrl.smsBaseUrl}${senderID}${msg}${numbers}&response=Y`)
           .pipe(map((resp) => resp.data)),
       );
-      console.log('SMS Service Response:', response);
 
       if (response) {
         const encOTP = await this.encSvc.encrypt(otp.toString());
