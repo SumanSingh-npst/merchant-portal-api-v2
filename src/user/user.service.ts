@@ -82,7 +82,6 @@ export class UserService {
 
       const rolesQuery = `SELECT ROLE_ID FROM USER_ROLES WHERE USER_ID = '${user.userId}';`;
       const r2 = await this.clickdb.query({ query: rolesQuery });
-
       const jsonRes2: any = await r2.json();
 
       const rolePromises = await jsonRes2.data.map(async (role) => {
