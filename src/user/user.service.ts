@@ -13,15 +13,15 @@ export class UserService {
 
   async create(user: User) {
     const userExists = await this.findOneByEmail(user.email);
-    console.log(userExists);
     let isEmailVerified: boolean = false;
+
     if (userExists) {
       isEmailVerified = await this.otpSvc.isOTPVerified(
         userExists.userId,
         'EMAIL',
       );
-      console.log(isEmailVerified);
     }
+
     if (userExists && isEmailVerified) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
