@@ -23,7 +23,6 @@ export class ReconService {
             await this.performCleanup('SWITCH_TXN');
             await this.performCleanup('NPCI_TXN');
             this.logger.log('cleanup activities process completed successfully.');
-
             await this.notifyCompletion();
             this.logger.log('Reconciliation process completed successfully.');
             return { status: true, msg: 'Reconciliation process completed successfully' };
