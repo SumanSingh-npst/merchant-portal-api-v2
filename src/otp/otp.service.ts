@@ -85,7 +85,7 @@ export class OtpService {
     return data;
   }
 
-  async verifyOTP(body: VerifyOTPDto) {
+  public async verifyOTP(body: VerifyOTPDto) {
     const { userId, otp, otpType } = body;
     const query = `
     SELECT OTP_VALUE 
@@ -101,7 +101,6 @@ export class OtpService {
       if (jsonRes.data.length === 0) {
         throw new HttpException('Invalid OTP', HttpStatus.BAD_REQUEST);
       } else {
-        //decrypt the otp
         const decryptedOTP = await this.encSvc.decrypt(
           jsonRes.data[0].OTP_VALUE,
         );
@@ -131,7 +130,7 @@ export class OtpService {
     }
   }
 
-  async isOTPVerified(userId: string, otpType: string) {
+  public async isOTPVerified(userId: string, otpType: string) {
     const query = `SELECT * FROM OTP_VERIFICATION WHERE USER_ID = '${userId}' AND OTP_TYPE = '${otpType}' AND VERIFIED = true;`;
     try {
       const r = await this.clickdb.query({ query: query });
@@ -142,7 +141,7 @@ export class OtpService {
     }
   }
 
-  async sendSms(body: SendSMSDto) {
+  public async sendSms(body: SendSMSDto) {
     const [otp, senderId, mobileNo]: [number, string, string] = [
       Math.floor(100000 + Math.random() * 900000),
       'TMEPAY',
@@ -170,13 +169,10 @@ export class OtpService {
         status: true,
         message: 'OTP sent Successfully.',
         data: response,
+        statusCode: 200,
       };
     } catch (error) {
-      this.logger.error(`sendSms Error :=> ${error}`);
-      return {
-        status: false,
-        message: 'Something went wrong.',
-      };
+      return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
   }
 }
