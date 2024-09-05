@@ -30,4 +30,8 @@ export class GetTXNDTO {
     },
   )
   public readonly txnType: string;
+
+  public readonly UPI_TXN_ID: string;
+  public readonly RRN: string;
+  public readonly UPICODE: string;
 }
