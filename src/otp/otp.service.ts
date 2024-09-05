@@ -162,9 +162,9 @@ export class OtpService {
 
       if (response) {
         const encOTP = await this.encSvc.encrypt(otp.toString());
-
         await this.saveOTP(body.userId, encOTP, body.otpType, '00');
       }
+
       return {
         status: true,
         message: 'OTP sent Successfully.',
