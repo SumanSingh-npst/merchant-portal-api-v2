@@ -1,16 +1,16 @@
 export class User {
-  public readonly userId?: string;
-  public readonly fullName?: string;
-  public readonly email: string;
-  public readonly password: string;
-  public readonly mobile: string;
-  public readonly lastLoggedIn?: string;
-  public readonly blocked?: boolean;
-  public readonly failedAttempt?: number;
-  public readonly createdOn?: string;
-  public readonly disabled?: boolean;
-  public readonly passwordResetDate?: string;
-  public readonly roles: string[];
+  public userId?: string;
+  public fullName?: string;
+  public email: string;
+  public password: string;
+  public mobile: string;
+  public lastLoggedIn?: string;
+  public blocked?: boolean;
+  public failedAttempt?: number;
+  public createdOn?: string;
+  public disabled?: boolean;
+  public passwordResetDate?: string;
+  public roles: string[];
 }
 
 // ? schema for the user table
