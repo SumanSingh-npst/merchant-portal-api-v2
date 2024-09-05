@@ -1,45 +1,34 @@
-# Stage 1: Build the NestJS application
-FROM node:20-alpine AS build
+# Build Stage
+FROM node:20-alpine as build
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json (or yarn.lock) to the container
 COPY package*.json ./
-
-# Install dependencies
-RUN npm install --frozen-lockfile
-
-# Copy the rest of the application code
+RUN npm install
+# RUN npm rebuild bcrypt --build-from-source
 COPY . .
 
-# Build the NestJS application
 RUN npm run build
 
-# Stage 2: Run the application
+# Production Stage
 FROM node:20-alpine
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the build output and node_modules from the build stage
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package*.json ./
 
-# Expose the port that the NestJS application will run on
-EXPOSE 3000
-ENV NODE_OPTIONS=--max-old-space-size=4096
-# Define the command to run the application
-CMD ["node", "dist/main"]
+# SET ENVIRONNMENT VARIABLE TO INCREASE RAM FOR NODE PROCESS
+# SET NODE_OPTIONS=--max-old-space-size=4096
+CMD ["node", "dist/main.js"] 
 
-
-#Step 1: build the docker image using command docker build -t chandansutradhar/merchant-portal-api-v2:1.2.3 .
-#Step 2: push the docker image to docker hub using command docker push chandansutradhar/merchant-portal-api-v2:1.2.3
-#Step 3: pull the docker image from docker hub using command docker pull chandansutradhar/merchant-portal-api-v2:1.2.3
+#Step 1: build the docker image using command docker build -t chandansutradhar/merchant-portal-api-v2:1.2.5 .
+#Step 2: push the docker image to docker hub using command docker push chandansutradhar/merchant-portal-api-v2:1.2.5
+#Step 3: pull the docker image from docker hub using command docker pull chandansutradhar/merchant-portal-api-v2:1.2.5
 #Step 4: run the docker image using command: 
 
-#sudo docker run -d --name cosmos-merchant-portal-v2 --restart on-failure -p 3000:3000 -v /home/npst_dev/portal-logs:/app/logs chandansutradhar/merchant-portal-api-v2:1.2.3
+#sudo docker run -d --name cosmos-merchant-portal-api-v2 --restart on-failure -p 3000:3000 -v /home/npst_dev/portal-logs:/app/logs chandansutradhar/merchant-portal-api-v2:1.2.5
 
 #Step 5: check the running container using command docker ps
 ##ONLY FOR TROUBLESHOOTING PURPOSE
