@@ -22,9 +22,8 @@ export class UserService {
       );
     }
 
-    if (userExists && isEmailVerified) {
+    if (userExists && isEmailVerified)
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
-    }
 
     const lastUser = await this.lastUser();
     const user_id = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
