@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  BadRequestException,
-  Res,
-} from '@nestjs/common';
+import { Controller, Post, Body, Res } from '@nestjs/common';
 import { ReportService } from './report.service';
 import { GetTXNDTO } from '../dtos/get-txn.dto';
 import { GetTXNCountDTO } from '../dtos/get-txn-count.dto';
@@ -28,7 +20,6 @@ export class ReportController {
 
   @Post('/getAllCount')
   async getAllCount(@Body() body: GetTXNCountDTO) {
-    const { startDate, endDate } = body;
     return await this.reportSvc.getAllCount(
       body.startDate,
       body.endDate,
@@ -38,7 +29,6 @@ export class ReportController {
 
   @Post('/getAllSuccessCount')
   async getAllSuccessCount(@Body() body: GetTXNCountDTO) {
-    const { startDate, endDate } = body;
     return await this.reportSvc.getAllSuccessCount(
       body.startDate,
       body.endDate,
@@ -48,7 +38,6 @@ export class ReportController {
 
   @Post('/getAllFailureCount')
   async getAllFailureCount(@Body() body: GetTXNCountDTO) {
-    const { startDate, endDate } = body;
     return await this.reportSvc.getAllFailureCount(
       body.startDate,
       body.endDate,
