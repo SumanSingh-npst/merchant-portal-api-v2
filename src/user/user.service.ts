@@ -96,13 +96,6 @@ export class UserService {
       const roles = await Promise.all(rolePromises);
       user.roles = roles.map((role) => role.ROLE_NAME);
       return user;
-
-      // for (const role of jsonRes2.data) {
-      //     //fetch role name from role id
-
-      //     user.roles.push(role.ROLE_ID);
-      // }
-      return user;
     } catch (error) {
       throw error;
     }
