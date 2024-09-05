@@ -29,9 +29,6 @@ export class ReportController {
       body.startPosition,
       body.offset,
       body.txnType,
-      body.UPI_TXN_ID,
-      body.RRN,
-      body.UPICODE,
     );
   }
 

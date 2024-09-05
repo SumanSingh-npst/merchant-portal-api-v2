@@ -16,27 +16,9 @@ export class ReportService {
     startPosition: number,
     offset: number,
     txnType: string,
-    UPI_TXN_ID?: string,
-    RRN?: string,
-    UPICODE?: string,
   ) {
     try {
-      let query = `SELECT * FROM ${txnType}`;
-      const conditions = [];
-
-      if (UPI_TXN_ID) {
-        conditions.push(`UPI_TXN_ID = '${UPI_TXN_ID}'`);
-      }
-
-      if (RRN) {
-        conditions.push(`RRN = '${RRN}'`);
-      }
-
-      if (UPICODE) {
-        conditions.push(`UPICODE = '${UPICODE}'`);
-      }
-
-      //   const query = `SELECT * FROM ${txnType} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
+      const query = `SELECT * FROM ${txnType} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
       console.log(`query= ${query}`);
       const res = await this.clickdb.query({ query });
       const data = await res.json();
