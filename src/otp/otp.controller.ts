@@ -1,15 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { OtpService } from './otp.service';
-import { CreateOtpDto } from './dto/create-otp.dto';
-import { UpdateOtpDto } from './dto/update-otp.dto';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
 import { SendSMSDto } from './dto/send-sms.dto';
@@ -36,30 +26,5 @@ export class OtpController {
   @Post('otpVerified')
   async isOTPVerified(@Body() body: { userId: string; otpType: string }) {
     return await this.otp.isOTPVerified(body.userId, body.otpType);
-  }
-
-  @Post()
-  create(@Body() createOtpDto: CreateOtpDto) {
-    // return this.otpService.create(createOtpDto);
-  }
-
-  @Get()
-  findAll() {
-    // return this.otpService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    // return this.otpService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOtpDto: UpdateOtpDto) {
-    // return this.otpService.update(+id, updateOtpDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    // return this.otpService.remove(+id);
   }
 }
