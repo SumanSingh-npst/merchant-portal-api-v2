@@ -135,8 +135,14 @@ export class DBService {
     async insertJunkDataToDB(txns: any[], isSwitch: boolean, tableName: string) {
         const batchSize = 16384;
         const maxRetries = 10;
-        console.log(`Started inserting missing /invalid data of size ${txns.length} records in batches of ${batchSize} rows per batch`);
+        console.log(`Started inserting missing /invalid/duplcated data of size ${txns.length} records in batches of ${batchSize} rows per batch`);
         const isNPCI = isSwitch ? 'FALSE' : 'TRUE';
+
+        if (txns.length === 0) {
+            console.log('nothing to insert quiting....')
+            return;
+        }
+
         for (let i = 0; i < txns.length; i += batchSize) {
             const batch = txns.splice(i, i + batchSize);
             console.log(`Inside batch ${i} to ${i + batchSize}`);
@@ -283,6 +289,5 @@ export class DBService {
             throw error; // Re-throw the error after logging
         }
     }
-
 
 }

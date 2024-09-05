@@ -11,7 +11,6 @@ export class ReconController {
   constructor(private readonly reconService: ReconService) {
   }
 
-  @Roles('admin') // Custom decorator to check roles
   @Get('/initiate2WayRecon')
   async initiate2WayRecon() {
     return await this.reconService.initiateTwoWayRecon();
