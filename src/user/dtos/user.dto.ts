@@ -1,16 +1,16 @@
 export class User {
-  static readonly userId?: string;
-  static readonly fullName?: string;
-  static readonly email: string;
-  static readonly password: string;
-  static readonly mobile: string;
-  static readonly lastLoggedIn?: string;
-  static readonly blocked?: boolean;
-  static readonly failedAttempt?: number;
-  static readonly createdOn?: string;
-  static readonly disabled?: boolean;
-  static readonly passwordResetDate?: string;
-  static readonly roles: string[];
+  public readonly userId?: string;
+  public readonly fullName?: string;
+  public readonly email: string;
+  public readonly password: string;
+  public readonly mobile: string;
+  public readonly lastLoggedIn?: string;
+  public readonly blocked?: boolean;
+  public readonly failedAttempt?: number;
+  public readonly createdOn?: string;
+  public readonly disabled?: boolean;
+  public readonly passwordResetDate?: string;
+  public readonly roles: string[];
 }
 
 // ? schema for the user table

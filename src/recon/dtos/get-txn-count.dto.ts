@@ -1,9 +1,9 @@
 import { IsIn, Matches } from 'class-validator';
 export class GetTXNCountDTO {
   @Matches(/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/)
-  static readonly startDate: string;
+  public readonly startDate: string;
   @Matches(/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/)
-  static readonly endDate: string;
+  public readonly endDate: string;
   @IsIn(
     [
       'NPCI_TXN',
@@ -18,5 +18,5 @@ export class GetTXNCountDTO {
         'tableName must be one of NPCI_TXN, SWITCH_TXN, RECON_TXN, DUPLICATE_TXN, NON_RECON_TXN or INVALID_TXN',
     },
   )
-  static readonly txnType: string;
+  public readonly txnType: string;
 }

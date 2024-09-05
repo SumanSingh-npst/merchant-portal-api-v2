@@ -1,5 +1,5 @@
 export class DownloadRequestDTO {
-  static readonly startDate: string;
-  static readonly endDate: string;
-  static readonly txnType: string;
+  public readonly startDate: string;
+  public readonly endDate: string;
+  public readonly txnType: string;
 }
