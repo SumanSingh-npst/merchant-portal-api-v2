@@ -26,8 +26,8 @@ export class UserService {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
 
     const lastUser = await this.lastUser();
-    const user_id = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
-
+    const userId = `u${parseInt(lastUser.userId.replace('u', '')) + 1}`;
+    user.userId = userId;
     user.blocked = false;
     user.failedAttempt = 0;
     user.createdOn = new Date().toISOString();
@@ -36,12 +36,12 @@ export class UserService {
     user.lastLoggedIn = new Date().toISOString();
     const query = `INSERT INTO USER (USER_ID, FULL_NAME, EMAIL, MOBILE, PASSWORD, 
         LAST_LOGGED_IN,BLOCKED, FAILED_ATTEMPT, CREATED_ON, DISABLED, PASSWORD_RESET_DATE) 
-        VALUES ('${user_id}','${user.fullName}','${user.email}','${user.mobile}','${user.password}',
+        VALUES ('${user.userId}','${user.fullName}','${user.email}','${user.mobile}','${user.password}',
         '${user.lastLoggedIn}','${user.blocked}','${user.failedAttempt}','${user.createdOn}','${user.disabled}', '${user.passwordResetDate}');`;
 
     const rolesQuery = `INSERT INTO USER_ROLES (USER_ID, ROLE_ID) VALUES`;
     const values = user.roles
-      .map((role) => `('${user_id}','${role}')`)
+      .map((role) => `('${user.userId}','${role}')`)
       .join(',');
     const finalRolesQuery = `${rolesQuery} ${values};`;
     try {
