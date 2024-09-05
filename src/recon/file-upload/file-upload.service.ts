@@ -224,8 +224,9 @@ export class FileUploadService {
     } else if (this.transactionIds.has(mappedData['UPI_TXN_ID'])) {
       this.duplicateTXNS.push(mappedData);
     } else if (
-      mappedData['PAYEE_VPA'] !== 'tpss.9284915805@timecosmos' &&
-      mappedData['PAYEE_VPA'] !== 'tpss.9730440083@timecosmos' &&
+      (mappedData['PAYEE_VPA'].includes('tpss.') &&
+        mappedData['PAYEE_VPA'] !== 'tpss.9284915805@timecosmos') ||
+      mappedData['PAYEE_VPA'] !== 'tpss.9730440083@timecosmos' ||
       mappedData['PAYEE_VPA'] !== 'tpss.babulapparelsraopurabr@timecosmos'
     ) {
       this.invalidTXNS.push(mappedData);
