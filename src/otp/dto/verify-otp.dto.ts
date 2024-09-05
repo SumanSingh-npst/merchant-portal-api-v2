@@ -1,23 +1,17 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Length,
-} from 'class-validator';
-import { OTPTYPE } from './send-otp.dto';
+import { IsEnum, IsNotEmpty, IsString, Length } from 'class-validator';
+import { OTP_TYPE } from './send-otp.dto';
 
 export class VerifyOTPDto {
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  public readonly userId: string;
 
   @IsString()
   @IsNotEmpty()
   @Length(6, 6, { message: 'OTP must be exactly 6 characters long' })
-  otp: string;
+  public readonly otp: string;
 
   @IsNotEmpty()
-  @IsEnum(OTPTYPE, { message: 'otpType must be either EMAIL or SMS' })
-  otpType: OTPTYPE;
+  @IsEnum(OTP_TYPE, { message: 'otpType must be either EMAIL or SMS' })
+  public readonly otpType: OTP_TYPE;
 }

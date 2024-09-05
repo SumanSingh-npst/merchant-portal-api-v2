@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export enum OTPTYPE {
+export enum OTP_TYPE {
   EMAIL = 'EMAIL',
   SMS = 'SMS',
 }
@@ -8,24 +8,24 @@ export enum OTPTYPE {
 export class SendOTPDto {
   @IsOptional()
   @IsString()
-  email?: string;
+  public readonly email?: string;
 
   @IsOptional()
   @IsString()
-  mobile?: string;
+  public readonly mobile?: string;
 
   @IsOptional()
-  otp?: number;
+  public readonly otp?: number;
 
   @IsNotEmpty()
-  @IsEnum(OTPTYPE, { message: 'otpType must be either EMAIL or SMS' })
-  otpType: OTPTYPE;
-
-  @IsNotEmpty()
-  @IsString()
-  fullName: string;
+  @IsEnum(OTP_TYPE, { message: 'otpType must be either EMAIL or SMS' })
+  public readonly otpType: OTP_TYPE;
 
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  public readonly fullName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  public readonly userId: string;
 }

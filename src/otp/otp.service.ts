@@ -7,10 +7,7 @@ import { AxiosError } from 'axios';
 import { firstValueFrom, catchError, lastValueFrom, map } from 'rxjs';
 import { EncryptionService } from 'src/common/encryption/encryption.service';
 import { SendOTPDto } from './dto/send-otp.dto';
-import { plainToClass } from 'class-transformer';
-import { validate } from 'class-validator';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
-import { Job } from 'bull';
 import { AppUrl } from 'appUrl';
 import { SendSMSDto } from './dto/send-sms.dto';
 
@@ -45,7 +42,6 @@ export class OtpService {
     console.log(body);
     const otp = Math.floor(100000 + Math.random() * 900000);
     console.log('OTP IS =>', otp);
-
 
     const payload = {
       from: {
@@ -152,15 +148,15 @@ export class OtpService {
 
   async sendSms(body: SendSMSDto) {
     const otp = Math.floor(100000 + Math.random() * 900000);
-    let message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
+    const message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
     const senderid = 'TMEPAY';
     const mobileNo = body.mobileNo;
 
     try {
-      let senderID = `&senderid=${senderid}`;
-      let msg = `&message=${message}`;
-      let numbers = `&dest_mobileno=${mobileNo}`;
-      let response = await lastValueFrom(
+      const senderID = `&senderid=${senderid}`;
+      const msg = `&message=${message}`;
+      const numbers = `&dest_mobileno=${mobileNo}`;
+      const response = await lastValueFrom(
         this.httpService
           .get(`${AppUrl.smsBaseUrl}${senderID}${msg}${numbers}&response=Y`)
           .pipe(map((resp) => resp.data)),
