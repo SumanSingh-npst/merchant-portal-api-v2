@@ -121,7 +121,7 @@ export class FileUploadService {
                     fileSize: file.size,
                     fileType: isSwitchFile ? 'SWITCH' : 'NPCI',
                     count: 0, // To be updated after processing
-                    uploadBy: '', // Set appropriately
+                    uploadBy: '', // Set appropriately based on current user
                     isDuplicate: false,
                     uploadId: lastId,
                 };
