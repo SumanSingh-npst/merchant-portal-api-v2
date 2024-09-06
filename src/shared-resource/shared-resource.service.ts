@@ -10,8 +10,8 @@ export class SharedResourceService {
   public async update(body: update) {
     try {
       const query = `ALTER TABLE "${body.tableName}" 
-                        UPDATE ${body.property} = '${body.value}' 
-                        WHERE ${body.identifier} = '${body.identifierValue}'`;
+                    UPDATE ${body.property} = '${body.value}' 
+                    WHERE ${body.identifier} = '${body.identifierValue}'`;
       const response = await this.db.query({ query: query });
       const data: any = await response.json();
       return data.data.length > 0
