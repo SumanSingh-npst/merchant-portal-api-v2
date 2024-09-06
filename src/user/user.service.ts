@@ -130,7 +130,12 @@ export class UserService {
       const response = await this.clickdb.query({ query: query });
       const data: any = await response.json();
       return data.data.length > 0
-        ? { data: data.data[0], status: true, msg: 'success', statusCode: 200 }
+        ? {
+            data: 'successfully update your user!',
+            status: true,
+            msg: 'success',
+            statusCode: 200,
+          }
         : {
             data: null,
             status: false,
