@@ -59,6 +59,8 @@ export class FileValidationService {
     const invalidNumberedTimecosmos =
       /^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z0-9]+@timecosmos$/;
     const amount = /^\d+(?:\.\d{1,2})?$/;
+    const dropCosb = /^(?!cosb)[a-zA-Z][a-zA-Z0-9]*\.\d{10}@timecosmos$/;
+
     // Removing the first row into invalid txn
     if (row.UPICODE == '2.0') {
       isValid = false;
@@ -69,6 +71,8 @@ export class FileValidationService {
     } else if (!clickhouseFormat.test(row.TXN_DATE)) {
       isValid = false;
     } else if (!invalidNumberedTimecosmos.test(row.PAYEE_VPA)) {
+      isValid = false;
+    } else if (!dropCosb.test(row.PAYEE_VPA)) {
       isValid = false;
     }
     return isValid;
