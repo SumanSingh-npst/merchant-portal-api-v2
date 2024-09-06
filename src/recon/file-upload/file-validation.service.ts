@@ -71,8 +71,11 @@ export class FileValidationService {
     } else if (!clickhouseFormat.test(row.TXN_DATE)) {
       isValid = false;
     } else if (!invalidNumberedTimecosmos.test(row.PAYEE_VPA)) {
+      console.log(row.PAYEE_VPA);
       isValid = false;
     } else if (!dropCosb.test(row.PAYEE_VPA)) {
+      console.log('in drop cosb', row.PAYEE_VPA);
+
       isValid = false;
     }
     return isValid;
