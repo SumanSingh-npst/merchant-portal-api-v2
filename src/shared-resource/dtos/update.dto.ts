@@ -1,4 +1,4 @@
-export class update_user {
+export class update {
   public readonly tableName: string;
   public readonly property: string;
   public readonly value: string;

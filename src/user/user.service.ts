@@ -3,7 +3,6 @@ import { InjectClickHouse } from '@md03/nestjs-clickhouse';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from './dtos/user.dto';
 import { OtpService } from 'src/otp/otp.service';
-import { update_user } from './dtos/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -116,31 +115,6 @@ export class UserService {
           }
         : {
             userId: 'u0',
-          };
-    } catch (error) {
-      return { res: error, status: false, msg: 'error', statusCode: 500 };
-    }
-  }
-
-  public async update(body: update_user) {
-    try {
-      const query = `ALTER TABLE "${body.tableName}" 
-                    UPDATE ${body.property} = '${body.value}' 
-                    WHERE ${body.identifier} = '${body.identifierValue}'`;
-      const response = await this.clickdb.query({ query: query });
-      const data: any = await response.json();
-      return data.data.length > 0
-        ? {
-            data: 'successfully update your user!',
-            status: true,
-            msg: 'success',
-            statusCode: 200,
-          }
-        : {
-            data: null,
-            status: false,
-            msg: 'notfound',
-            statusCode: 400,
           };
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };

@@ -14,6 +14,7 @@ import { TokenValidationInterceptor } from './interceptors/token-validation.inte
 import { UserModule } from './user/user.module';
 import { EncryptionService } from './common/encryption/encryption.service';
 import { OtpModule } from './otp/otp.module';
+import { SharedResourceModule } from './shared-resource/shared-resource.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { OtpModule } from './otp/otp.module';
     AuditModule,
     UserModule,
     OtpModule,
+    SharedResourceModule,
   ],
 
   controllers: [AppController],
