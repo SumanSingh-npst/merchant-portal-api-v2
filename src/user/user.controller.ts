@@ -1,5 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { UserService } from './user.service';
+import { update_user } from './dtos/update-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -11,6 +12,11 @@ export class UserController {
   @Get('/findOneByEmail/:email')
   async findOneByEmail(@Param('email') email: string) {
     return await this.userService.findOneByEmail(email);
+  }
+
+  @Post('/update')
+  async update(@Body() body: update_user) {
+    return await this.userService.update(body);
   }
 }
 //1. //find by email
