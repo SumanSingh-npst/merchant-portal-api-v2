@@ -11,42 +11,47 @@ export class ReportService {
 
   async getAllTXN(body: any) {
     try {
-      let query = `SELECT * FROM ${body.txnType}`;
+      let query = `SELECT * FROM ${body.txnType} WHERE TXN_DATE BETWEEN '${body.startDate}' AND '${body.endDate}'`;
+  
       const conditions: string[] = [];
-
+  
       if (body.UPI_TXN_ID) {
         conditions.push(`UPI_TXN_ID = '${body.UPI_TXN_ID}'`);
       }
-
+  
       if (body.RRN) {
         conditions.push(`RRN = '${body.RRN}'`);
       }
-
+  
       if (body.UPICODE) {
-        conditions.push(`RRN = '${body.UPICODE}'`);
+        conditions.push(`UPICODE = '${body.UPICODE}'`); 
       }
-
+  
       if (body.PAYER_VPA) {
-        conditions.push(`RRN = '${body.PAYER_VPA}'`);
+        conditions.push(`PAYER_VPA = '${body.PAYER_VPA}'`); 
       }
-
+  
       if (body.PAYEE_VPA) {
-        conditions.push(`RRN = '${body.PAYEE_VPA}'`);
+        conditions.push(`PAYEE_VPA = '${body.PAYEE_VPA}'`); 
       }
-
+  
       if (conditions.length > 0) {
-        query += ` WHERE ${conditions.join(' AND ')}`;
+        query += ` AND ${conditions.join(' AND ')}`;
       }
-
-      //   const query = `SELECT * FROM ${txnType} WHERE TXN_DATE BETWEEN '${startDate}' AND '${endDate}' LIMIT ${offset} OFFSET ${startPosition}`;
+  
+      query += ` LIMIT ${body.offset} OFFSET ${body.startPosition}`;
+  
       const res = await this.clickdb.query({ query });
       const data = await res.json();
+      
       return data.data;
+  
     } catch (error) {
       console.error('Error fetching npci transactions:', error);
-      throw new Error('Error fetching npci transactions' + error);
+      throw new Error('Error fetching npci transactions: ' + error);
     }
   }
+  
 
   async getAllCount(startDate: string, endDate: string, tableName: string) {
     try {

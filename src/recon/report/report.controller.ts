@@ -14,7 +14,7 @@ export class ReportController {
   ) {}
 
   @Post('/getTXNS')
-  async getTXNByType(@Body() body: GetTXNDTO) {
+  async getTXNByType(@Body() body: any) {
     return await this.reportSvc.getAllTXN(body);
   }
 
