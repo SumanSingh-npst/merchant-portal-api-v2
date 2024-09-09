@@ -223,16 +223,24 @@ export class FileUploadService {
       this.invalidTXNS.push(mappedData);
     } else if (this.transactionIds.has(mappedData['UPI_TXN_ID'])) {
       this.duplicateTXNS.push(mappedData);
-    } else if (
-      (mappedData['PAYEE_VPA'].includes('tpss.') &&
-        mappedData['PAYEE_VPA'] !== 'tpss.9284915805@timecosmos') ||
-      mappedData['PAYEE_VPA'] !== 'tpss.9730440083@timecosmos' ||
-      mappedData['PAYEE_VPA'] !== 'tpss.babulapparelsraopurabr@timecosmos'
-    ) {
-      this.invalidTXNS.push(mappedData);
     } else {
-      this.validTXNS.push(mappedData);
-      this.transactionIds.add(mappedData['UPI_TXN_ID']);
+      if (mappedData['PAYEE_VPA'].includes('tpss.')) {
+        console.log('i have');
+        if (
+          mappedData['PAYEE_VPA'] == 'tpss.9284915805@timecosmos' ||
+          mappedData['PAYEE_VPA'] == 'tpss.9730440083@timecosmos' ||
+          mappedData['PAYEE_VPA'] == 'tpss.babulapparelsraopurabr@timecosmos'
+        ) {
+          console.log('i am in valid');
+          this.validTXNS.push(mappedData);
+          this.transactionIds.add(mappedData['UPI_TXN_ID']);
+        } else {
+          this.invalidTXNS.push(mappedData);
+        }
+      } else {
+        this.validTXNS.push(mappedData);
+        this.transactionIds.add(mappedData['UPI_TXN_ID']);
+      }
     }
   }
 
