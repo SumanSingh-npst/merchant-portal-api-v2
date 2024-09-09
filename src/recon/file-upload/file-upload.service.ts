@@ -35,30 +35,6 @@ export class FileUploadService {
 
   private fileUploadHistoryData: IFileUpload[] = [];
 
-  validPayeeVPAs: string[] = [
-    'tpss.2rankakokanechowk@timecosmos',
-    'tpss.9284915805@timecosmos',
-    'tpss.2rankasinhagadrd@timecosmos',
-    'tpss.prachigarments.16@timecosmos',
-    'tpss.prachigarments.3@timecosmos',
-    'tpss.prachigarments.12@timecosmos',
-    'tpss.prachigarments.17@timecosmos',
-    'tpss.prachigarments01@timecosmos',
-    'tpss.prachigarments.4@timecosmos',
-    'tpss.prachigarments.5@timecosmos',
-    'tpss.prachigarments.10@timecosmos',
-    'tpss.prachigarments.6@timecosmos',
-    'tpss.prachigarments.7@timecosmos',
-    'tpss.sadguru.temple05@timecosmos',
-    'tpss.sadguru.temple03@timecosmos',
-    'tpss.sadguru.temple@timecosmos',
-    'tpss.sadguru.temple06@timecosmos',
-    'tpss.babulapparelsraopurabr@timecosmos',
-    'tpss.babulapparelswaghodiabr@timecosmos',
-    'tpss.7230440083@timecosmos',
-    'tpss.9730440083@timecosmos',
-  ];
-
   constructor(
     private dbSvc: DBService,
     @InjectClickHouse() private readonly clickdb: ClickHouseClient,
@@ -250,20 +226,6 @@ export class FileUploadService {
     } else if (this.transactionIds.has(mappedData['UPI_TXN_ID'])) {
       this.duplicateTXNS.push(mappedData);
     } else {
-      // if (mappedData['PAYEE_VPA'].includes('tpss.')) {
-      //   console.log('Checking VPA:', mappedData['PAYEE_VPA']);
-
-      //   // Check if the mappedData['PAYEE_VPA'] is in validPayeeVPAs array
-      //   if (this.validPayeeVPAs.includes(mappedData['PAYEE_VPA'])) {
-      //     console.log('Valid VPA:', mappedData['PAYEE_VPA']);
-      //     this.validTXNS.push(mappedData); // Add to valid transactions
-      //     this.transactionIds.add(mappedData['UPI_TXN_ID']); // Add UPI_TXN_ID to transactionIds
-      //   } else {
-      //     console.log('Invalid VPA:', mappedData['PAYEE_VPA']);
-      //     this.invalidTXNS.push(mappedData); // Add to invalid transactions
-      //   }
-      // }
-
       this.validTXNS.push(mappedData);
       this.transactionIds.add(mappedData['UPI_TXN_ID']);
     }
