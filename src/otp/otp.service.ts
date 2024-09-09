@@ -40,6 +40,7 @@ export class OtpService {
 
   public async sendOTP(body: SendOTPDto) {
     const otp = Math.floor(100000 + Math.random() * 900000);
+    console.log('email otp ', otp);
 
     const payload = {
       from: {
@@ -147,6 +148,8 @@ export class OtpService {
       'TMEPAY',
       body.mobileNo,
     ];
+
+    console.log(otp, 'sms')
 
     const message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
 
