@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get } from '@nestjs/common';
 import { OtpService } from './otp.service';
 import { SendOTPDto } from './dto/send-otp.dto';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
@@ -26,5 +26,10 @@ export class OtpController {
   @Post('otpVerified')
   async isOTPVerified(@Body() body: { userId: string; otpType: string }) {
     return await this.otp.isOTPVerified(body.userId, body.otpType);
+  }
+
+  @Get('test')
+  async testfn(){
+    return await this.otp.testfn();
   }
 }
