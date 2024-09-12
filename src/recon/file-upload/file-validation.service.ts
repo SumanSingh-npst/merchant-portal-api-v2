@@ -4,29 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class FileValidationService {
   payeeVpa = `^[a-zA-Z0-9]+\.[a-zA-Z0-9]+@timecosmos$`;
 
-  validPayeeVPAs: string[] = [
-    'tpss.2rankakokanechowk@timecosmos',
-    'tpss.9284915805@timecosmos',
-    'tpss.2rankasinhagadrd@timecosmos',
-    'tpss.prachigarments.16@timecosmos',
-    'tpss.prachigarments.3@timecosmos',
-    'tpss.prachigarments.12@timecosmos',
-    'tpss.prachigarments.17@timecosmos',
-    'tpss.prachigarments01@timecosmos',
-    'tpss.prachigarments.4@timecosmos',
-    'tpss.prachigarments.5@timecosmos',
-    'tpss.prachigarments.10@timecosmos',
-    'tpss.prachigarments.6@timecosmos',
-    'tpss.prachigarments.7@timecosmos',
-    'tpss.sadguru.temple05@timecosmos',
-    'tpss.sadguru.temple03@timecosmos',
-    'tpss.sadguru.temple@timecosmos',
-    'tpss.sadguru.temple06@timecosmos',
-    'tpss.babulapparelsraopurabr@timecosmos',
-    'tpss.babulapparelswaghodiabr@timecosmos',
-    'tpss.7230440083@timecosmos',
-    'tpss.9730440083@timecosmos',
-  ];
+  public validPayeeVPAs: string[] = [];
 
   mapData(data: any, isSwitchFile: boolean, uploadId: number) {
     let rows: any = {};
@@ -80,7 +58,8 @@ export class FileValidationService {
   validateRow(row: any) {
     let isValid = true;
     const clickhouseFormat = /^\d{4}-\d{2}-\d{2}$/;
-    const payeeIsNotTimecosmos = /^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+){1,2}@timecosmos$/;
+    const payeeIsNotTimecosmos =
+      /^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+){1,2}@timecosmos$/;
     const amount = /^\d+(?:\.\d{1,2})?$/;
     const startsWithNumber = /^\d/;
     // Removing the first row into invalid txn
@@ -95,6 +74,7 @@ export class FileValidationService {
     } else if (startsWithNumber.test(row.PAYEE_VPA)) {
       isValid = false;
     } else if (!this.validPayeeVPAs.includes(row.PAYEE_VPA)) {
+      console.log('is invalid' ,row.PAYEE_VPA)
       isValid = false;
     }
     return isValid;

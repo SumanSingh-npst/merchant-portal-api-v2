@@ -219,8 +219,16 @@ export class FileUploadService {
     });
   }
 
-  private handleCSVData(data: any, isSwitchFile: boolean, uploadId: number) {
+  private async handleCSVData(
+    data: any,
+    isSwitchFile: boolean,
+    uploadId: number,
+  ) {
     const mappedData = this.validator.mapData(data, isSwitchFile, uploadId);
+
+    if (this.validator.validPayeeVPAs.length == 0) {
+      await this.fetchValidVPAs();
+    }
     if (!this.validator.validateRow(mappedData)) {
       this.invalidTXNS.push(mappedData);
     } else if (this.transactionIds.has(mappedData['UPI_TXN_ID'])) {
@@ -382,5 +390,40 @@ export class FileUploadService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async fetchValidVPAs() {
+    const query = `SELECT * FROM "VALID_PAYEEVPA" WHERE "IS_VALID"=true`;
+    const result = await this.clickdb.query({ query });
+    const jsonResult: any = await result.json();
+
+    const data: string[] = jsonResult.data.map((row: any) => row.PAYEE_VPA);
+
+    // console.log(data);
+    this.validator.validPayeeVPAs = data;
+  }
+
+  async addValidPayeeVPAs(array: any[]) {
+    const query = `SELECT * FROM "VALID_PAYEEVPA"`;
+    const result = await this.clickdb.query({ query });
+    const jsonResult: any = await result.json();
+
+    const existingVPAs = jsonResult.data.map((row: any) => {
+      return { PAYEE_VPA: row.PAYEE_VPA, IS_VALID: row.IS_VALID };
+    });
+    const newVPAs = array.filter(
+      (item) => !existingVPAs.some((vpa) => vpa.PAYEE_VPA === item.payeeVPA),
+    );
+
+    console.log(newVPAs);
+    if (newVPAs.length > 0) {
+      const values = newVPAs
+        .map((vpa) => `('${vpa.payeeVPA}', true)`)
+        .join(',');
+        const insertQuery = `INSERT INTO "VALID_PAYEEVPA" ("PAYEE_VPA", "IS_VALID") VALUES ${values}`;
+        await this.clickdb.exec({ query: insertQuery });
+    }
+
+    console.log('Inserted new VPAs:', newVPAs);
   }
 }

@@ -38,4 +38,12 @@ export class FileUploadController {
         const { fileName, uploadId } = body;
         return await this.fileUploadService.deleteFileHistory(fileName, uploadId, body.fileType);
     }
+
+  
+
+    @Post('/addValidPayeeVPAs')
+    async addValidPayeeVPAs(@Body() body: any[]) {
+        console.log('here')
+        return await this.fileUploadService.addValidPayeeVPAs(body);
+    }
 }
