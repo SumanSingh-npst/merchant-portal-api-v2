@@ -10,6 +10,7 @@ import { SendOTPDto } from './dto/send-otp.dto';
 import { VerifyOTPDto } from './dto/verify-otp.dto';
 import { AppUrl } from 'appUrl';
 import { SendSMSDto } from './dto/send-sms.dto';
+const otpGenerator = require('otp-generator');
 
 @Injectable()
 export class OtpService {
@@ -39,7 +40,13 @@ export class OtpService {
   }
 
   public async sendOTP(body: SendOTPDto) {
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otp = otpGenerator.generate(6, {
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
+    // const otp = Math.floor(100000 + Math.random() * 900000);
+    console.log('email otp ', otp);
 
     console.log('OTP for email IS:', otp);
     
@@ -145,12 +152,15 @@ export class OtpService {
   }
 
   public async sendSms(body: SendSMSDto) {
-    const [otp, senderId, mobileNo]: [number, string, string] = [
-      Math.floor(100000 + Math.random() * 900000),
-      'TMEPAY',
-      body.mobileNo,
-    ];
-    console.log('OTP for sms IS:', otp);
+    const otp = otpGenerator.generate(6, {
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
+
+    const [senderId, mobileNo]: [string, string] = ['TMEPAY', body.mobileNo];
+
+    console.log(otp, 'sms');
 
     const message = `Dear User,Your OTP (One Time Password) is ${otp}. OTP is valid for 10 mins. pls do not share with anyone. TimePay`;
 
@@ -178,5 +188,13 @@ export class OtpService {
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
+  }
+
+  testfn() {
+    return otpGenerator.generate(6, {
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
   }
 }

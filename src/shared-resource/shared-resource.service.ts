@@ -1,7 +1,7 @@
 import { ClickHouseClient } from '@clickhouse/client';
 import { InjectClickHouse } from '@md03/nestjs-clickhouse';
 import { Injectable } from '@nestjs/common';
-import { update } from './dtos/update.dto';
+import { Find, update } from './dtos/update.dto';
 
 @Injectable()
 export class SharedResourceService {
@@ -23,6 +23,41 @@ export class SharedResourceService {
     } catch (error) {
       console.log(error);
       return { res: error, status: false, msg: 'error', statusCode: 500 };
+    }
+  }
+
+  public async findByValue(body: Find) {
+    try {
+      const query = `SELECT * FROM "${body.tableName}" 
+                     WHERE ${body.identifier} = '${body.identifierValue}'`;
+
+      const { data } = await (await this.db.query({ query })).json();
+      const myresult = data[0];
+      console.log(myresult);
+
+      if (myresult == undefined) {
+        return {
+          data: null,
+          status: false,
+          msg: 'No records found',
+          statusCode: 404,
+        };
+      }
+
+      return {
+        data: myresult,
+        status: true,
+        msg: 'Data retrieved successfully',
+        statusCode: 200,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        res: error,
+        status: false,
+        msg: 'Error during query execution',
+        statusCode: 500,
+      };
     }
   }
 
