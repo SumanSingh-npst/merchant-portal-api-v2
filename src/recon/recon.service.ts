@@ -157,7 +157,7 @@ export class ReconService {
             `All ${maxAttempts} attempts failed. ${tableName} could not be truncated.`,
             error,
           );
-          throw error; // Re-throw error if all attempts fail
+          throw error; // Re-throw error if all attempts faill
         }
       }
     }
