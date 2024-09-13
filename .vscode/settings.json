@@ -12,5 +12,8 @@
       "driver": "ClickHouse",
       "name": "clickhouse-cloud"
     }
+  ],
+  "cSpell.words": [
+    "ifsc"
   ]
 }

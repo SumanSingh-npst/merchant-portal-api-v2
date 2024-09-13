@@ -15,6 +15,7 @@ import { UserModule } from './user/user.module';
 import { EncryptionService } from './common/encryption/encryption.service';
 import { OtpModule } from './otp/otp.module';
 import { SharedResourceModule } from './shared-resource/shared-resource.module';
+import { BusinessModule } from './business/business.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { SharedResourceModule } from './shared-resource/shared-resource.module';
     UserModule,
     OtpModule,
     SharedResourceModule,
+    BusinessModule,
   ],
 
   controllers: [AppController],
