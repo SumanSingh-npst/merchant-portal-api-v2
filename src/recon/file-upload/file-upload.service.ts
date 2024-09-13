@@ -13,7 +13,6 @@ import { InjectClickHouse } from '@md03/nestjs-clickhouse';
 import { FileValidationService } from './file-validation.service';
 import { DBService } from './db.service';
 import { Multer } from 'multer';
-import { map } from 'rxjs';
 
 export interface IFileUpload {
   fileName: string;
@@ -420,8 +419,8 @@ export class FileUploadService {
       const values = newVPAs
         .map((vpa) => `('${vpa.payeeVPA}', true)`)
         .join(',');
-        const insertQuery = `INSERT INTO "VALID_PAYEEVPA" ("PAYEE_VPA", "IS_VALID") VALUES ${values}`;
-        await this.clickdb.exec({ query: insertQuery });
+      const insertQuery = `INSERT INTO "VALID_PAYEEVPA" ("PAYEE_VPA", "IS_VALID") VALUES ${values}`;
+      await this.clickdb.exec({ query: insertQuery });
     }
 
     console.log('Inserted new VPAs:', newVPAs);
