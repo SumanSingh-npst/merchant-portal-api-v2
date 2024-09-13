@@ -13,7 +13,6 @@ export class SharedResourceService {
                     UPDATE ${body.property} = '${body.value}' 
                     WHERE ${body.identifier} = '${body.identifierValue}'`;
       await this.db.query({ query: query });
-
       return {
         data: 'successfully update your user!',
         status: true,
