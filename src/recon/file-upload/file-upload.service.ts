@@ -392,7 +392,7 @@ export class FileUploadService {
   }
 
   async fetchValidVPAs() {
-    const query = `SELECT * FROM "VALID_PAYEEVPA" WHERE "IS_VALID"=true`;
+    const query = `SELECT * FROM "VALID_PAYEE_VPA" WHERE "IS_VALID"=true`;
     const result = await this.clickdb.query({ query });
     const jsonResult: any = await result.json();
 
@@ -403,7 +403,7 @@ export class FileUploadService {
   }
 
   async addValidPayeeVPAs(array: any[]) {
-    const query = `SELECT * FROM "VALID_PAYEEVPA"`;
+    const query = `SELECT * FROM "VALID_PAYEE_VPA"`;
     const result = await this.clickdb.query({ query });
     const jsonResult: any = await result.json();
 
@@ -419,7 +419,7 @@ export class FileUploadService {
       const values = newVPAs
         .map((vpa) => `('${vpa.payeeVPA}', true)`)
         .join(',');
-      const insertQuery = `INSERT INTO "VALID_PAYEEVPA" ("PAYEE_VPA", "IS_VALID") VALUES ${values}`;
+      const insertQuery = `INSERT INTO "VALID_PAYEE_VPA" ("PAYEE_VPA", "IS_VALID") VALUES ${values}`;
       await this.clickdb.exec({ query: insertQuery });
     }
 
