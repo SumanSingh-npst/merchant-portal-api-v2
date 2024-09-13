@@ -29,14 +29,13 @@ export class SharedResourceService {
           msg: 'success',
           statusCode: 200,
         };
-      } else {
+      } else
         return {
           data: 'table not found',
           status: false,
           msg: 'not found',
           statusCode: 404,
         };
-      }
     } catch (error) {
       console.log(error);
       return { res: error, status: false, msg: 'error', statusCode: 500 };
