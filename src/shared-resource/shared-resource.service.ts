@@ -10,16 +10,18 @@ export class SharedResourceService {
   public async update(body: update) {
     try {
       const tableCheck = await this.allTables();
-      console.log(tableCheck.data);
 
       let tablePresent;
-      tableCheck.data.map((data) => {
-        if (data.name != body.tableName) {
-          tablePresent = false;
-        } else {
+      tableCheck.data.map((data: { name: string }) => {
+        console.log(data.name.includes(body.tableName), data.name);
+        if (data.name.includes(body.tableName)) {
           tablePresent = true;
+        } else {
+          tablePresent = false;
         }
       });
+
+      console.log(tablePresent);
 
       if (tablePresent) {
         const query = `ALTER TABLE "${body.tableName}" 
