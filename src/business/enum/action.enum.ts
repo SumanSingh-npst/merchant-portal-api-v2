@@ -1,0 +1,7 @@
+export enum Action {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PENDING = 'PENDING',
+  DISCREPANT = 'DISCREPANT',
+  BLOCKED = 'BLOCKED',
+}

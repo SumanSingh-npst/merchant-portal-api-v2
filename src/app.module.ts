@@ -16,6 +16,7 @@ import { EncryptionService } from './common/encryption/encryption.service';
 import { OtpModule } from './otp/otp.module';
 import { SharedResourceModule } from './shared-resource/shared-resource.module';
 import { VerificationModule } from './verification/verification.module';
+import { BusinessModule } from './business/business.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { VerificationModule } from './verification/verification.module';
     OtpModule,
     SharedResourceModule,
     VerificationModule,
+    BusinessModule,
   ],
 
   controllers: [AppController],

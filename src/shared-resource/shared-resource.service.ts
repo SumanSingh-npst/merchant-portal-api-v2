@@ -37,7 +37,6 @@ export class SharedResourceService {
           statusCode: 404,
         };
     } catch (error) {
-      console.log(error);
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
   }
@@ -47,47 +46,46 @@ export class SharedResourceService {
       const query = `SELECT * FROM "${body.tableName}" 
                      WHERE ${body.identifier} = '${body.identifierValue}'`;
 
-      const { data } = await (await this.db.query({ query })).json();
-      const myresult = data[0];
-      console.log(myresult);
+      const data: any = await this.responseConstructor(query);
 
-      if (myresult == undefined) {
-        return {
-          data: null,
-          status: false,
-          msg: 'No records found',
-          statusCode: 404,
-        };
-      }
-
-      return {
-        data: myresult,
-        status: true,
-        msg: 'Data retrieved successfully',
-        statusCode: 200,
-      };
+      return data.data.length == 0
+        ? {
+            data: null,
+            status: false,
+            msg: 'No records found',
+            statusCode: 404,
+          }
+        : {
+            data: data.data[0],
+            status: true,
+            msg: 'Data retrieved successfully',
+            statusCode: 200,
+          };
     } catch (error) {
-      console.log(error);
-      return {
-        res: error,
-        status: false,
-        msg: 'Error during query execution',
-        statusCode: 500,
-      };
+      return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
   }
 
   private async allTables() {
     try {
       const query = `SHOW TABLES`;
-      const table = await this.db.query({ query: query });
-      const tableNames: any = await table.json();
+      const data: any = await this.responseConstructor(query);
       return {
-        data: tableNames.data,
+        data: data.data,
         status: true,
         msg: 'success',
         statusCode: 200,
       };
+    } catch (error) {
+      return { res: error, status: false, msg: 'error', statusCode: 500 };
+    }
+  }
+
+  private async responseConstructor(query: string) {
+    try {
+      const table = await this.db.query({ query: query });
+      const data = await table.json();
+      return data;
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
