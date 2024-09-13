@@ -81,7 +81,7 @@ export class SharedResourceService {
     }
   }
 
-  private async responseConstructor(query: string) {
+  public async responseConstructor(query: string) {
     try {
       const table = await this.db.query({ query: query });
       const data = await table.json();

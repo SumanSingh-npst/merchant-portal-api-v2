@@ -20,3 +20,27 @@ export class create_business {
 }
 
 // ? businessId (public key) : public key for joining.
+// * schema for business table.
+// CREATE TABLE BUSINESS
+// (
+//   businessRegistrationName String,
+//   isGstPresent Boolean,
+//   isTurnoverLessThanLimit Boolean,
+//   isBusinessCategoryExempted Boolean,
+//   businessName String,
+//   businessType String,
+//   businessModel String,
+//   businessCategoryCode String,
+//   businessSubcategory String,
+//   categoryCode String,
+//   businessDescription String,
+//   businessWebsite String,
+//   appStoreLink String,
+//   contactUs String,
+//   termsConditions String,
+//   refundPolicy String,
+//   businessEmail String,
+//   businessId UUID DEFAULT generateUUIDv4()
+// )
+// ENGINE = ReplacingMergeTree()
+// ORDER BY businessId;
