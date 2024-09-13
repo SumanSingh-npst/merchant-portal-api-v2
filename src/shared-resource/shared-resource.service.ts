@@ -9,16 +9,37 @@ export class SharedResourceService {
 
   public async update(body: update) {
     try {
-      const query = `ALTER TABLE "${body.tableName}" 
-                    UPDATE ${body.property} = '${body.value}' 
-                    WHERE ${body.identifier} = '${body.identifierValue}'`;
-      await this.db.query({ query: query });
-      return {
-        data: 'successfully update your user!',
-        status: true,
-        msg: 'success',
-        statusCode: 200,
-      };
+      const tableCheck = await this.allTables();
+      console.log(tableCheck.data);
+
+      let tablePresent;
+      tableCheck.data.map((data) => {
+        if (data.name != body.tableName) {
+          tablePresent = false;
+        } else {
+          tablePresent = true;
+        }
+      });
+
+      if (tablePresent) {
+        const query = `ALTER TABLE "${body.tableName}" 
+        UPDATE ${body.property} = '${body.value}' 
+        WHERE ${body.identifier} = '${body.identifierValue}'`;
+        await this.db.query({ query: query });
+        return {
+          data: 'successfully update your user!',
+          status: true,
+          msg: 'success',
+          statusCode: 200,
+        };
+      } else {
+        return {
+          data: 'table not found',
+          status: false,
+          msg: 'not found',
+          statusCode: 404,
+        };
+      }
     } catch (error) {
       console.log(error);
       return { res: error, status: false, msg: 'error', statusCode: 500 };
@@ -63,7 +84,14 @@ export class SharedResourceService {
   private async allTables() {
     try {
       const query = `SHOW TABLES`;
-      await this.db.query({ query: query });
+      const table = await this.db.query({ query: query });
+      const tableNames: any = await table.json();
+      return {
+        data: tableNames.data,
+        status: true,
+        msg: 'success',
+        statusCode: 200,
+      };
     } catch (error) {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
