@@ -15,6 +15,7 @@ import { UserModule } from './user/user.module';
 import { EncryptionService } from './common/encryption/encryption.service';
 import { OtpModule } from './otp/otp.module';
 import { SharedResourceModule } from './shared-resource/shared-resource.module';
+import { VerificationModule } from './verification/verification.module';
 import { BusinessModule } from './business/business.module';
 
 @Module({
@@ -47,6 +48,7 @@ import { BusinessModule } from './business/business.module';
     UserModule,
     OtpModule,
     SharedResourceModule,
+    VerificationModule,
     BusinessModule,
   ],
 

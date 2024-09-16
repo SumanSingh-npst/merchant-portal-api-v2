@@ -10,6 +10,7 @@
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "nest start",
         "start:dev": "nest start --watch",
+        "dev": "nest start --watch",
         "start:window": "set NODE_OPTIONS=--max-old-space-size=4096 && nest start --watch",
         "start:linux": "NODE_OPTIONS='--max-old-space-size=4096' nest start --watch",
         "start:debug": "nest start --debug --watch",
