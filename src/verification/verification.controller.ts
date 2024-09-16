@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { VerificationService } from './verification.service';
-import { VerificationDto, verifyAadhaarOTP } from './dto/create-verification.dto';
+import {  AadhaarVerificationDto, GstVerificationDto, PanVerificationDto, verifyAadhaarOTP } from './dto/create-verification.dto';
 import { UpdateVerificationDto } from './dto/update-verification.dto';
 
 @Controller('verification')
@@ -8,19 +8,19 @@ export class VerificationController {
   constructor(private readonly verificationService: VerificationService) {}
 
   @Post('pan')
-  verifyPan(@Body() body: VerificationDto) {
+  verifyPan(@Body() body: PanVerificationDto) {
     return this.verificationService.verifyPan(body);
   }
 
 
   @Post('gst')
-  verifyGST(@Body() body: VerificationDto) {
+  verifyGST(@Body() body: GstVerificationDto) {
     return this.verificationService.verifyGST(body);
   }
 
 
   @Post('generateAadhaarOTP')
-  verifyAadhaar(@Body() body: VerificationDto) {
+  verifyAadhaar(@Body() body: AadhaarVerificationDto) {
     return this.verificationService.generateAadhaarOTP(body);
   }
 
