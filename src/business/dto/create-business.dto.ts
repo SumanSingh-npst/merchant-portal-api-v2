@@ -1,4 +1,5 @@
 export class create_business {
+  public readonly businessId: string;
   public readonly businessRegistrationName: string;
   public readonly isGstPresent: boolean;
   public readonly isTurnoverLessThanLimit: boolean;
@@ -16,7 +17,6 @@ export class create_business {
   public readonly termsConditions: string;
   public readonly refundPolicy: string;
   public readonly businessEmail: string;
-  public readonly businessId: string;
 }
 
 // ? businessId (public key) : public key for joining.
