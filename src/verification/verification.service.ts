@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateVerificationDto } from './dto/create-verification.dto';
+import {  VerificationDto, verifyAadhaarOTP } from './dto/create-verification.dto';
 import { UpdateVerificationDto } from './dto/update-verification.dto';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
@@ -11,22 +11,17 @@ export class VerificationService {
   bearerToken: string =
     'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyMzExMDgyOCwianRpIjoiNjhhZmUwZjAtYzQwOC00MGVlLWE1YTMtMmYyMzE2NTFhZWY1IiwidHlwZSI6ImFjY2VzcyIsImlkZW50aXR5IjoiZGV2Lm5wc3R4QHN1cmVwYXNzLmlvIiwibmJmIjoxNzIzMTEwODI4LCJleHAiOjIwMzg0NzA4MjgsImVtYWlsIjoibnBzdHhAc3VyZXBhc3MuaW8iLCJ0ZW5hbnRfaWQiOiJtYWluIiwidXNlcl9jbGFpbXMiOnsic2NvcGVzIjpbInVzZXIiXX19.WxlRslnSL0YPpX6TcS2th4TzTdNI_zZx0jvvcUaEOcI';
 
-  create(createVerificationDto: CreateVerificationDto) {
-    return 'This action adds a new verification';
-  }
 
-  async verifyPan(body: any): Promise<any> {
-    console.log(body.panNo)
+
+  async verifyPan(body: VerificationDto): Promise<any> {
     const url = `${this.surePass}/api/v1/pan/pan-comprehensive`;
-
-    const mybody = { id_number: body.panNo };
-    console.log(mybody)
+    console.log(body);
 
     try {
       const response = await lastValueFrom(
-        this.httpService.post(url, mybody, {
+        this.httpService.post(url, body, {
           headers: {
-            Authorization: `Bearer ${this.bearerToken}`, // Bearer token in headers
+            Authorization: `Bearer ${this.bearerToken}`,
           },
         }),
       );
@@ -35,59 +30,54 @@ export class VerificationService {
       throw new Error('Error verifying PAN');
     }
   }
+  async verifyGST(body: VerificationDto): Promise<any> {
+    const url = `${this.surePass}/api/v1/corporate/gstin`;
 
-  //   async verifyGST(gstNo: string) {
-  //     return new Promise<any>(async (resolve, reject) => {
-  //         try {
-  //             const checkGstFormate = validateGst(gstNo);
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(url, body, {
+          headers: {
+            Authorization: `Bearer ${this.bearerToken}`,
+          },
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('Error verifying PAN');
+    }
+  }
+  async generateAadhaarOTP(body: VerificationDto): Promise<any> {
+    const url = `${this.surePass}/api/v1/aadhaar-v2/generate-otp`;
 
-  //             if (!checkGstFormate) {
-  //                 // throw new Error('Invalid GST number');
-  //                 return resolve(new NpstResp({ data: false, msg: "Invalid GST number", status: false }));
-  //             }
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(url, body, {
+          headers: {
+            Authorization: `Bearer ${this.bearerToken}`,
+          },
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('Error verifying PAN');
+    }
+  }
+  async verifyAadhaarOTP(body: verifyAadhaarOTP): Promise<any> {
+    const url = `${this.surePass}/api/v1/aadhaar-v2/submit-otp`;
 
-  //             /**
-  //              * check if GST is already present in DB
-  //              */
-
-  //             const data = JSON.stringify({
-  //                 "id_number": `${gstNo}`
-  //             })
-
-  //             let url = `${this.configService.get('SUREPASS_BASE_URL')}/api/v1/corporate-otp/gstin/init`
-
-  //             const gstData = await firstValueFrom(this.httpService.post(
-  //                 url,
-  //                 // "https://sandbox.surepass.io/api/v1/corporate-otp/gstin/init",
-  //                 data,
-  //                 {
-  //                     headers: {
-  //                         'Content-Type': 'application/json',
-  //                         'Authorization': `Bearer ${this.configService.get('SUREPASS_TOKEN')}`
-  //                     }
-  //                 }
-  //             ));
-  //             this.logger.log("Surepass GST Response : " + gstData.data);
-
-  //             /**
-  //              * Save this response in DB for avoide calling API again
-  //              */
-
-  //             return resolve(new NpstResp(
-  //                 {
-  //                     data: gstData.data.data
-  //                 }
-  //             ));
-  //         } catch (error) {
-  //             console.log("🚀 ~ ValidationService ~ returnnewPromise<NpstResp> ~ error:", error)
-  //             // this.logger.error(error);
-
-  //             // throw new Error(`GST verification failed: ${error.message}`);
-  //             return resolve(new NpstResp({ data: null, msg: error.message, status: false }))
-  //         }
-  //     })
-
-  // }
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(url, body, {
+          headers: {
+            Authorization: `Bearer ${this.bearerToken}`,
+          },
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('Error verifying PAN');
+    }
+  }
 
   findAll() {
     return `This action returns all verification`;
