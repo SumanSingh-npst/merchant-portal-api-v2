@@ -83,10 +83,11 @@ export class SharedResourceService {
 
   public async responseConstructor(query: string) {
     try {
-      const table = await this.db.query({ query: query });
+      const table = await this.db.query({ query });
       const data = await table.json();
       return data;
     } catch (error) {
+      console.log(error);
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
   }
