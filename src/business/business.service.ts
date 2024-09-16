@@ -3,13 +3,15 @@ import { InjectClickHouse } from '@md03/nestjs-clickhouse';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { add_Email_In_Business } from './dto/add-email-business.dto';
+import { SharedResourceService } from 'src/shared-resource/shared-resource.service';
 
 @Injectable()
 export class BusinessService {
   constructor(
     @InjectClickHouse() private readonly clickdb: ClickHouseClient,
  
-    private configSvc: ConfigService,
+    private configSvc: ConfigService,private readonly shared: SharedResourceService
   ) {}
 
   async create(body: any): Promise<any> {   
@@ -45,6 +47,28 @@ console.log(jsonRes)
       } catch (error) {
         console.error('Error:', error);
         throw new Error('Failed to insert business record or check existence');
+      }
+    }
+
+    public async addEmailInBusiness(body: add_Email_In_Business) {
+      try {
+        const query = `INSERT TABLE BUSINESS (businessEmail) VALUE ('${body.businessEmail}')`;
+        const data: any = await this.shared.responseConstructor(query);
+        return data.data.length > 0
+          ? {
+              data: data.data[0],
+              status: true,
+              msg: 'success',
+              statusCode: 200,
+            }
+          : {
+              data: null,
+              status: false,
+              msg: 'not found',
+              statusCode: 404,
+            };
+      } catch (error) {
+        return { res: error, status: false, statusCode: 500, msg: 'error' };
       }
     }
 }
