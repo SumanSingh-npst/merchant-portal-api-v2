@@ -15,38 +15,6 @@ export class BusinessService {
     private readonly shared: SharedResourceService,
   ) {}
 
-  // async create(body: any): Promise<any> {
-  //   const checkQuery = `SELECT * FROM BUSINESS WHERE userId = '${body.userId}'`;
-  //   try {
-  //     const result = await this.clickdb.query({ query: checkQuery });
-  //     const jsonRes: any = await result.json();
-  //     console.log(jsonRes);
-  //     if (jsonRes.data.length > 0) {
-  //       return new Error('A business record already exists for this userId.');
-  //     }
-
-  //     const insertQuery = `
-  //         INSERT INTO BUSINESS (
-  //           businessRegistrationName, isGstPresent, isTurnoverLessThanLimit, isBusinessCategoryExempted,
-  //           businessName, businessType, businessModel, businessCategoryCode, businessSubcategory,
-  //           categoryCode, businessDescription, businessWebsite, appStoreLink, contactUs, termsConditions,
-  //           refundPolicy, businessEmail, userId
-  //         )
-  //         VALUES (
-  //           '', false, false, false,
-  //           '', '', '', '', '',
-  //           '', '', '', '', '', '',
-  //           '', '', '${body.userId}'
-  //         );
-  //       `;
-
-  //     await this.clickdb.exec({ query: insertQuery });
-  //     return { message: 'Business record inserted successfully' };
-  //   } catch (error) {
-  //     console.error('Error:', error);
-  //     throw new Error('Failed to insert business record or check existence');
-  //   }
-  // }
   public async create(body: createBusiness) {
     try {
       console.log(body);
@@ -68,8 +36,7 @@ export class BusinessService {
       // const createdOnIST = await this.shared.toIST(body.createdOn);
 
       body.createdOn = new Date().toISOString().split('T')[0];
-      console.log(body.createdOn)
-  
+      console.log(body.createdOn);
 
       const insertQuery = `INSERT INTO BUSINESS (BUSINESS_EMAIL, USER_ID, CREATED_ON) VALUES ('${body.businessEmail}', '${body.userId}', '${body.createdOn}')`;
       await this.clickdb.command({ query: insertQuery });
@@ -101,10 +68,33 @@ export class BusinessService {
   }
 
   public async saveDocument(body: documentDto) {
-    body.verifiedOn = new Date().toISOString().split('T')[0];
-    console.log(body.verifiedOn)
+    const businessIdExists = await this.shared.findByValue({
+      tableName: 'BUSINESS',
+      identifier: 'BUSINESS_ID',
+      identifierValue: body.businessId,
+    });
 
-    const insertQuery = `INSERT INTO DOCUMENTS (DOCUMENT_NO, DOCUMENT_STATUS, VERIFIED_ON, DOCUMENT_RAW_DATA, DOCUMENT_TYPE, DOCUMENT_REFERENCE_ID) VALUES ('${body.documentNo}', '${body.documentStatus}',   '${body.verifiedOn}' ,'${body.documentRawData}' ,'${body.documentType}','${body.businessId}')`;
-    await this.clickdb.command({ query: insertQuery });
+    if (!businessIdExists.status) {
+      return { data: null, status: false, msg: `Business ID doesn't exist` };
+    }
+
+    body.verifiedOn = new Date().toISOString().split('T')[0];
+    body.documentRawData = JSON.stringify(body.documentRawData);
+
+    const insertQuery = `INSERT INTO DOCUMENTS (DOCUMENT_NO, DOCUMENT_STATUS, VERIFIED_ON, DOCUMENT_RAW_DATA, DOCUMENT_TYPE, DOCUMENT_REFERENCE_ID, KYC_PROVIDER) 
+                         VALUES ('${body.documentNo}', '${body.documentStatus}', '${body.verifiedOn}', '${body.documentRawData}', '${body.documentType}', '${body.businessId}', '${body.KYCProvider}')`;
+
+    try {
+      const result: any = await this.clickdb.command({ query: insertQuery });
+      console.log(result);
+
+      //fix this for error 👇👇👇
+      return result
+        ? { data: result, status: true, msg: 'Document saved successfully' }
+        : { data: 'error', status: false, msg: 'Failed to save the document' };
+    } catch (error) {
+      console.error(error);
+      return { data: null, status: false, msg: 'Error executing query' };
+    }
   }
 }

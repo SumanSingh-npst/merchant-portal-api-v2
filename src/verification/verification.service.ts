@@ -29,56 +29,56 @@ export class VerificationService {
     const url = `${this.surePass}/api/v1/pan/pan-comprehensive`;
     console.log(body, this.bearerToken);
 
-    // return panDummyData;
-    try {
-      const response = await lastValueFrom(
-        this.httpService.post(url, body, {
-          headers: { Authorization: `Bearer ${this.bearerToken}` },
-        }),
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        'Error verifying PAN:',
-        error.response?.data || error.message,
-      );
+    return panDummyData;
+    // try {
+    //   const response = await lastValueFrom(
+    //     this.httpService.post(url, body, {
+    //       headers: { Authorization: `Bearer ${this.bearerToken}` },
+    //     }),
+    //   );
+    //   return response.data;
+    // } catch (error) {
+    //   console.error(
+    //     'Error verifying PAN:',
+    //     error.response?.data || error.message,
+    //   );
 
-      return {
-        success: false,
-        status: error.response?.status || 500,
-        message:
-          error.response?.data?.message ||
-          'Service unavailable, try again later',
-      };
-    }
+    //   return {
+    //     success: false,
+    //     status: error.response?.status || 500,
+    //     message:
+    //       error.response?.data?.message ||
+    //       'Service unavailable, try again later',
+    //   };
+    // }
   }
 
   async verifyGST(body: GstVerificationDto): Promise<any> {
     const url = `${this.surePass}/api/v1/corporate/gstin`;
     console.log(body, this.bearerToken);
 
-    // return GSTDummyData;
-    try {
-      const response = await lastValueFrom(
-        this.httpService.post(url, body, {
-          headers: { Authorization: `Bearer ${this.bearerToken}` },
-        }),
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        'Error verifying GST:',
-        error.response?.data || error.message,
-      );
+    return GSTDummyData;
+    // try {
+    //   const response = await lastValueFrom(
+    //     this.httpService.post(url, body, {
+    //       headers: { Authorization: `Bearer ${this.bearerToken}` },
+    //     }),
+    //   );
+    //   return response.data;
+    // } catch (error) {
+    //   console.error(
+    //     'Error verifying GST:',
+    //     error.response?.data || error.message,
+    //   );
 
-      return {
-        success: false,
-        status: error.response?.status || 500,
-        message:
-          error.response?.data?.message ||
-          'Service unavailable, try again later',
-      };
-    }
+    //   return {
+    //     success: false,
+    //     status: error.response?.status || 500,
+    //     message:
+    //       error.response?.data?.message ||
+    //       'Service unavailable, try again later',
+    //   };
+    // }
   }
 
   async generateAadhaarOTP(body: AadhaarVerificationDto): Promise<any> {

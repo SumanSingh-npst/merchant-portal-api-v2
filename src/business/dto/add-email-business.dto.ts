@@ -12,4 +12,10 @@ export class documentDto {
   documentType: string;
   businessId: string;
   verifiedOn?: any;
+  KYCProvider?: KYCPROVIDERS;
+}
+
+export enum KYCPROVIDERS {
+  SUREPASS = 'SUREPASS',
+  DECENTRO = 'DECENTRO',
 }
