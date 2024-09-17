@@ -91,4 +91,14 @@ export class SharedResourceService {
       return { res: error, status: false, msg: 'error', statusCode: 500 };
     }
   }
+  toIST(date: Date): string {
+    const offset = 5.5 * 60 * 60 * 1000; // IST is UTC +5:30
+    const istDate = new Date(date.getTime() + offset);
+    
+    return istDate
+      .toISOString()
+      .slice(0, 19) // Slices to get 'YYYY-MM-DDTHH:mm:ss'
+      .replace('T', ' '); // Replaces 'T' with space
+  }
+  
 }
