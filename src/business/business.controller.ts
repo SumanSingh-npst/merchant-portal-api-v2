@@ -18,6 +18,13 @@ export class BusinessController {
   }
 
 
+  @Post('registration')
+  businessRegistration(@Body() body: any) {
+    return this.businessService.businessRegistration(body);
+  }
+
+
+
   // @Post('addEmail')
 
   // async addEmailInBusiness(@Body() body: add_Email_In_Business) {

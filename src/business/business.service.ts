@@ -97,4 +97,41 @@ export class BusinessService {
       return { data: null, status: false, msg: 'Error executing query' };
     }
   }
+
+  public async businessRegistration(body: any) {
+    const businessIdExists = await this.shared.findByValue({
+      tableName: 'BUSINESS',
+      identifier: 'BUSINESS_ID',
+      identifierValue: body.businessId,
+    });
+
+    if (!businessIdExists.status) {
+      return { data: null, status: false, msg: `Business ID doesn't exist` };
+    }
+    // ${body.isGSTpresent}
+    // '${body.applicableOption}'
+
+    const alterQuery = `
+    ALTER TABLE BUSINESS 
+    UPDATE 
+    BUSINESS_REGISTRATION_NAME = '${body.businessRegistrationName}',
+        IS_GST_PRESENT =true,
+        IS_TURNOVER_LESS_THAN_LIMIT = true,
+        BUSINESS_NAME = '${body.businessRegistrationName}'
+    WHERE BUSINESS_ID = '${body.businessId}';
+`;
+    console.log(alterQuery);
+    await this.clickdb.command({ query: alterQuery });
+
+    const addressQuery = `    INSERT INTO ADDRESS_INFO (ADDRESS_LINE,
+
+CITY,
+STATE,
+COUNTRY,
+PINCODE
+VALUES ('${body.businessAddress}', '${body.city}','${body.state}','${body.country}','${body.pincode}'`;
+
+    const result: any = await this.clickdb.command({ query: addressQuery });
+    console.log(result);
+  }
 }
