@@ -123,13 +123,7 @@ export class BusinessService {
     console.log(alterQuery);
     await this.clickdb.command({ query: alterQuery });
 
-    const addressQuery = `    INSERT INTO ADDRESS_INFO (ADDRESS_LINE,
-
-CITY,
-STATE,
-COUNTRY,
-PINCODE
-VALUES ('${body.businessAddress}', '${body.city}','${body.state}','${body.country}','${body.pincode}'`;
+    const addressQuery = `INSERT INTO ADDRESS_INFO (ADDRESS_LINE,CITY,STATE,COUNTRY,PINCODE VALUES ('${body.businessAddress}', '${body.city}','${body.state}','${body.country}','${body.pincode}'`;
 
     const result: any = await this.clickdb.command({ query: addressQuery });
     console.log(result);
