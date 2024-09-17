@@ -92,13 +92,13 @@ export class SharedResourceService {
     }
   }
   toIST(date: Date): string {
-    const offset = 5.5 * 60 * 60 * 1000; // IST is UTC +5:30
-    const istDate = new Date(date.getTime() + offset);
+    // const offset = 5.5 * 60 * 60 * 1000; // IST is UTC +5:30
+    const istDate = new Date(date);
     
     return istDate
       .toISOString()
-      .slice(0, 19) // Slices to get 'YYYY-MM-DDTHH:mm:ss'
-      .replace('T', ' '); // Replaces 'T' with space
+      // .slice(0, 19) // Slices to get 'YYYY-MM-DDTHH:mm:ss'
+      // .replace('T', ' '); // Replaces 'T' with space
   }
   
 }

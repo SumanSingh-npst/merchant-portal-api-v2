@@ -64,10 +64,14 @@ export class BusinessService {
           msg: 'Email already exists in business',
         };
       }
-      body.createdOn = new Date();
-      const createdOnIST = await this.shared.toIST(body.createdOn);
+      // body.createdOn = new Date();
+      // const createdOnIST = await this.shared.toIST(body.createdOn);
 
-      const insertQuery = `INSERT INTO BUSINESS (BUSINESS_EMAIL, USER_ID, CREATED_ON) VALUES ('${body.businessEmail}', '${body.userId}', '${createdOnIST}')`;
+      body.createdOn = new Date().toISOString().split('T')[0];
+      console.log(body.createdOn)
+  
+
+      const insertQuery = `INSERT INTO BUSINESS (BUSINESS_EMAIL, USER_ID, CREATED_ON) VALUES ('${body.businessEmail}', '${body.userId}', '${body.createdOn}')`;
       await this.clickdb.command({ query: insertQuery });
 
       const selectQuery = `SELECT BUSINESS_ID FROM BUSINESS WHERE BUSINESS_EMAIL ='${body.businessEmail}' LIMIT 1`;
@@ -97,10 +101,10 @@ export class BusinessService {
   }
 
   public async saveDocument(body: documentDto) {
-    body.verifiedOn = new Date();
-    const verifiedOnIST = await this.shared.toIST(body.verifiedOn);
+    body.verifiedOn = new Date().toISOString().split('T')[0];
+    console.log(body.verifiedOn)
 
-    const insertQuery = `INSERT INTO DOCUMENTS (DOCUMENT_NO, DOCUMENT_STATUS, VERIFIED_ON, DOCUMENT_RAW_DATA, DOCUMENT_TYPE, DOCUMENT_REFERENCE_ID) VALUES ('${body.documentNo}', '${body.documentStatus}',   '${verifiedOnIST}' ,'${body.documentRawData}' ,'${body.documentType}','${body.businessId}')`;
+    const insertQuery = `INSERT INTO DOCUMENTS (DOCUMENT_NO, DOCUMENT_STATUS, VERIFIED_ON, DOCUMENT_RAW_DATA, DOCUMENT_TYPE, DOCUMENT_REFERENCE_ID) VALUES ('${body.documentNo}', '${body.documentStatus}',   '${body.verifiedOn}' ,'${body.documentRawData}' ,'${body.documentType}','${body.businessId}')`;
     await this.clickdb.command({ query: insertQuery });
   }
 }
