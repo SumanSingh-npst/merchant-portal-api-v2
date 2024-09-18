@@ -29,28 +29,25 @@ export class VerificationService {
     const url = `${this.surePass}/api/v1/pan/pan-comprehensive`;
     console.log(body, this.bearerToken);
 
-    return panDummyData;
-    // try {
-    //   const response = await lastValueFrom(
-    //     this.httpService.post(url, body, {
-    //       headers: { Authorization: `Bearer ${this.bearerToken}` },
-    //     }),
-    //   );
-    //   return response.data;
-    // } catch (error) {
-    //   console.error(
-    //     'Error verifying PAN:',
-    //     error.response?.data || error.message,
-    //   );
-
-    //   return {
-    //     success: false,
-    //     status: error.response?.status || 500,
-    //     message:
-    //       error.response?.data?.message ||
-    //       'Service unavailable, try again later',
-    //   };
-    // }
+    // return panDummyData;
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(url, body, {
+          headers: { Authorization: `Bearer ${this.bearerToken}` },
+        }),
+      );
+      console.log("🚀 ~ VerificationService ~ verifyPan ~ response:", response)
+      return response.data;
+    } catch (error) {
+     console.log("🚀 ~ VerificationService ~ verifyPan ~ error:", error)
+      return {
+        success: false,
+        status: error.response?.status || 500,
+        message:
+          error.response?.data?.message ||
+          'Service unavailable, try again later',
+      };
+    }
   }
 
   async verifyGST(body: GstVerificationDto): Promise<any> {
